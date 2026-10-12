@@ -34,16 +34,29 @@ export async function saveConfig(url, token) {
 }
 
 async function call(body) {
-  const res = await fetch(config.url, {
-    method: 'POST',
-    // text/plain keeps this a "simple" request, so the browser skips a CORS preflight
-    // that Apps Script can't answer.
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ ...body, token: config.token }),
-    redirect: 'follow',
-  });
+  let res;
+  try {
+    res = await fetch(config.url, {
+      method: 'POST',
+      // text/plain keeps this a "simple" request, so the browser skips a CORS preflight
+      // that Apps Script can't answer.
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ ...body, token: config.token }),
+      redirect: 'follow',
+    });
+  } catch {
+    // Network failure, or Google answered with a sign-in/error page the browser blocked.
+    throw new Error(navigator.onLine
+      ? 'Could not reach the Google Sheet script. Check the URL ends in /exec and the deployment\'s access is "Anyone".'
+      : 'Offline');
+  }
   if (!res.ok) throw new Error(`Google Sheet: HTTP ${res.status}`);
-  const out = await res.json();
+  let out;
+  try {
+    out = await res.json();
+  } catch {
+    throw new Error('Google returned a web page instead of data. Redeploy the script as a new version with access "Anyone".');
+  }
   if (!out.ok) throw new Error(`Google Sheet: ${out.error}`);
   return out;
 }

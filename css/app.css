@@ -1,44 +1,60 @@
+/* Bohn AgVentures theme: orange on dark grey. Follows the iPhone light/dark setting;
+   the header bar stays dark grey with orange lettering in both. */
 :root {
-  --bg: #f4f2ec;
+  --bg: #f2f1ef;
   --surface: #ffffff;
-  --surface-2: #ece9e0;
-  --text: #1d1f1c;
-  --muted: #6b6e66;
-  --line: #dcd8cc;
-  --brand: #1f5f3a;
-  --brand-ink: #ffffff;
-  --accent: #e2b007;
+  --surface-2: #e8e7e4;
+  --text: #1f2023;
+  --muted: #66686d;
+  --line: #dcdad6;
+  --bar: #2e3033;        /* header bar */
+  --bar-ink: #f28c28;    /* header lettering */
+  --tabbar: #ffffff;
+  --brand: #d26f0f;      /* orange accents: active tab, buttons, charts */
+  --brand-ink: #ffffff;  /* text on orange buttons */
+  --accent: #2e3033;     /* target marker on progress bars */
   --up: #1d7a3e;
   --down: #b3261e;
-  --warn-bg: #fff4d6;
-  --warn-ink: #6b4e00;
+  --warn-bg: #fdecd9;
+  --warn-ink: #7a3d00;
   --radius: 14px;
   --tabbar-h: 58px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121411;
-    --surface: #1c1f1b;
-    --surface-2: #262a25;
-    --text: #ecebe6;
-    --muted: #9da197;
-    --line: #333830;
-    --brand: #3f9a63;
-    --brand-ink: #0d140f;
-    --accent: #f2c53d;
+    --bg: #1e1f21;
+    --surface: #2a2c2f;
+    --surface-2: #35383c;
+    --text: #eceae6;
+    --muted: #a0a2a6;
+    --line: #3d4044;
+    --bar: #2e3033;
+    --bar-ink: #f28c28;
+    --tabbar: #2e3033;
+    --brand: #f28c28;
+    --brand-ink: #1e1f21;
+    --accent: #eceae6;
     --up: #5cc882;
     --down: #ff7a6e;
-    --warn-bg: #3a3112;
-    --warn-ink: #f6dc8a;
+    --warn-bg: #4a3215;
+    --warn-ink: #ffd2a1;
     color-scheme: dark;
   }
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
+  /* iOS home-screen apps with a translucent status bar size the page short by the
+     status-bar height when content is shorter than the screen, which lifts the fixed
+     tab bar and leaves a black strip below it. Always being this tall avoids that. */
+  min-height: calc(100% + env(safe-area-inset-top));
+}
 body {
   margin: 0;
+  min-height: calc(100vh + env(safe-area-inset-top));
   background: var(--bg);
   color: var(--text);
   font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -51,7 +67,7 @@ body {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; gap: 4px;
   padding: calc(env(safe-area-inset-top) + 8px) 12px 8px 16px;
-  background: var(--brand); color: var(--brand-ink);
+  background: var(--bar); color: var(--bar-ink);
 }
 .topbar h1 { flex: 1; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
 .icon-btn {
@@ -71,7 +87,7 @@ body {
   display: grid; grid-template-columns: repeat(5, 1fr);
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: var(--surface); border-top: 1px solid var(--line);
+  background: var(--tabbar); border-top: 1px solid var(--line);
 }
 .tabbar a {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -87,8 +103,11 @@ h3 { font-size: 16px; margin: 0 0 8px; }
 .card {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 14px; margin: 12px 0;
+  scroll-margin-top: calc(env(safe-area-inset-top) + 72px); /* clear the sticky header */
 }
 .card.tight { padding: 0; overflow: hidden; }
+.card.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0%, 30% { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .row { display: flex; gap: 10px; align-items: center; }
 .row > * { flex: 1; min-width: 0; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -116,7 +135,7 @@ th:first-child, td:first-child { text-align: left; padding-left: 14px; }
 th:last-child, td:last-child { padding-right: 14px; }
 tr:last-child td { border-bottom: 0; }
 tbody tr.sel { background: color-mix(in srgb, var(--brand) 12%, transparent); }
-tbody tr[data-click] { cursor: pointer; }
+tbody tr[data-click] { cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 td .big { font-weight: 700; font-size: 17px; }
 td small { display: block; color: var(--muted); font-size: 12px; }
 .scroll-x { overflow-x: auto; }

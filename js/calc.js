@@ -12,7 +12,31 @@ const state = {
   loadW: '', loadUnit: 'kg', dock: '', loadP: '', loadPUnit: '$/MT',
   binBu: '', binBid: '',
   yBu: '', yAcres: '',
+  acPrice: '', acFrom: '', acYield: '', acCost: '',
+  flash: false,
 };
+
+// Yield and cost per acre are remembered per commodity on this device.
+const ACRE_KEY = 'calc-acre';
+function loadAcre(com) {
+  try { return JSON.parse(localStorage.getItem(ACRE_KEY) || '{}')[com] ?? {}; } catch { return {}; }
+}
+function saveAcre(com, values) {
+  try {
+    const all = JSON.parse(localStorage.getItem(ACRE_KEY) || '{}');
+    all[com] = values;
+    localStorage.setItem(ACRE_KEY, JSON.stringify(all));
+  } catch { /* storage unavailable: keep values for this session only */ }
+}
+
+// Called from the Offers tab (double-tap on a bid) before switching to this tab.
+export function prefillAcre({ com, pricePerBu, label }) {
+  const saved = loadAcre(com);
+  Object.assign(state, {
+    com, acPrice: pricePerBu.toFixed(2), acFrom: label,
+    acYield: saved.yield ?? state.acYield, acCost: saved.cost ?? state.acCost, flash: true,
+  });
+}
 
 const fmtIn = (v, d = 3) => (v == null || !Number.isFinite(v) ? '' : String(+v.toFixed(d)));
 
@@ -38,12 +62,18 @@ export default {
   render(root) {
     const id = () => state.com;
     const comSel = select(COMMODITIES.map((c) => ({ value: c.id, label: c.name })), state.com, {
-      onchange: (e) => { state.com = e.target.value; root.replaceChildren(); this.render(root); },
+      onchange: (e) => {
+        state.com = e.target.value;
+        state.acYield = state.acCost = state.acFrom = ''; // reload this commodity's saved yield/costs
+        root.replaceChildren(); this.render(root);
+      },
     });
     const factor = U.buPerMt(id());
     root.append(
       h('h2', {}, 'Calculators'),
       field('Commodity', comSel, `${num(factor, 3)} bu per tonne · ${num(U.lbPerBu(id()), 2)} lb per bu (change in Settings)`),
+
+      acreCard(),
 
       card('Bushels ↔ Tonnes', null,
         pair('bu', 'mt', 'Bushels', 'Tonnes (MT)', (v) => U.buToMt(v, id()), (v) => U.mtToBu(v, id()), 3)),
@@ -56,6 +86,49 @@ export default {
       binCard(),
       yieldCard(),
     );
+
+    function acreCard() {
+      if (!state.acYield && !state.acCost) {
+        const saved = loadAcre(id());
+        state.acYield = saved.yield ?? ''; state.acCost = saved.cost ?? '';
+      }
+      const price = numberInput({ value: state.acPrice, placeholder: '18.43' });
+      const yld = numberInput({ value: state.acYield, placeholder: '50' });
+      const cost = numberInput({ value: state.acCost, placeholder: 'Optional' });
+      const out = resultBox();
+      const calc = () => {
+        Object.assign(state, { acPrice: price.value, acYield: yld.value, acCost: cost.value });
+        saveAcre(id(), { yield: yld.value, cost: cost.value });
+        const p = parseNum(price.value), y = parseNum(yld.value), c = parseNum(cost.value);
+        if (p == null || y == null) {
+          out.replaceChildren(h('span', { class: 'muted small' }, 'Enter a price and your yield. Tip: double-tap a bid on the Offers tab to fill the price.'));
+          return;
+        }
+        const revenue = p * y;
+        out.replaceChildren(
+          line('Revenue per acre', `${money(revenue)}/ac`),
+          line('Yield in tonnes', `${num(U.buToMt(y, id()), 3)} MT/ac`),
+          c != null ? line('Profit per acre', h('span', { class: revenue - c >= 0 ? 'up' : 'down' }, `${money(revenue - c)}/ac`)) : '',
+          c != null && y ? line('Break-even price', `${money(c / y)}/bu`) : '');
+      };
+      price.addEventListener('input', () => { state.acFrom = ''; calc(); });
+      [yld, cost].forEach((el) => el.addEventListener('input', calc));
+      calc();
+
+      const el = card('Revenue per acre', state.acFrom ? `Price from LDC ${commodity(id())?.name} ${state.acFrom} bid.` : 'Price × yield. Add costs to see profit.',
+        h('div', { class: 'grid2' }, field('Price $/bu', price), field('Yield bu/ac', yld)),
+        field('Costs $/ac', cost, 'Seed, fert, chem, land… leave blank for revenue only.'),
+        out);
+      if (state.flash) {
+        state.flash = false;
+        el.classList.add('flash');
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          if (!yld.value) yld.focus({ preventScroll: true });
+        });
+      }
+      return el;
+    }
 
     function cashCard() {
       const inputs = { fut: numberInput({ value: state.fut }), basis: numberInput({ value: state.basis }), cash: numberInput({ value: state.cash }) };

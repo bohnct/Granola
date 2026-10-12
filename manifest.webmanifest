@@ -1,12 +1,12 @@
 {
-  "name": "Grain Desk",
-  "short_name": "Grain Desk",
+  "name": "Bohn AgVentures",
+  "short_name": "Bohn Ag",
   "description": "LDC Yorkton canola bids, futures, grain inventory, sales and calculators.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f2ec",
-  "theme_color": "#1f5f3a",
+  "background_color": "#2e3033",
+  "theme_color": "#2e3033",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

@@ -3,8 +3,24 @@ import * as data from './data.js';
 import { DEFAULT_FACILITY, FACILITIES } from './config.js';
 import { h, num, money, segmented, timeAgo } from './ui.js';
 import { lineChart } from './chart.js';
+import { prefillAcre } from './calc.js';
 
 const state = { com: 'canola', unit: 'MT', sel: null, chart: 'price' };
+const DOUBLE_TAP_MS = 350;
+let lastTap = { label: null, at: 0 };
+
+// iPhone Safari doesn't fire dblclick reliably, so detect two quick taps ourselves.
+function onRowTap(bid, single) {
+  const now = Date.now();
+  if (lastTap.label === bid.label && now - lastTap.at < DOUBLE_TAP_MS) {
+    lastTap = { label: null, at: 0 };
+    prefillAcre({ com: state.com, pricePerBu: bid.price / bid.buPerUnit, label: bid.label });
+    location.hash = '#calc';
+    return;
+  }
+  lastTap = { label: bid.label, at: now };
+  single();
+}
 
 function fmtRange(start, end) {
   const f = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
@@ -44,7 +60,7 @@ export default {
           const f = perBu ? b.buPerUnit : 1;
           return h('tr', {
             class: state.sel === b.label ? 'sel' : '', 'data-click': '',
-            onclick: () => { state.sel = state.sel === b.label ? null : b.label; draw(); },
+            onclick: () => onRowTap(b, () => { state.sel = state.sel === b.label ? null : b.label; draw(); }),
           },
           h('td', {}, h('b', {}, b.label), h('small', {}, fmtRange(b.start, b.end))),
           h('td', { class: b.basis < 0 ? 'down' : 'up' }, num(b.basis / f, perBu ? 2 : 2)),
@@ -54,7 +70,7 @@ export default {
     }
 
     function detail() {
-      if (!state.sel) return h('p', { class: 'small muted' }, 'Tap a delivery month to see its price history.');
+      if (!state.sel) return h('p', { class: 'small muted' }, 'Tap a delivery month for its price history. Double-tap to work out revenue per acre.');
       const card = h('div', { class: 'card' }, h('h3', {}, `${state.sel} history`));
       const holder = h('div', {}, h('p', { class: 'small muted' }, 'Loading…'));
       const which = segmented([{ value: 'price', label: 'Cash price' }, { value: 'basis', label: 'Basis' }], state.chart,
