@@ -1,0 +1,43 @@
+name: Fetch LDC prices
+
+on:
+  schedule:
+    # Times are UTC. Every 15 min, Mon-Fri 7:00-14:59 Saskatchewan time (UTC-6),
+    # plus an evening run to capture the settled prices.
+    - cron: "*/15 13-20 * * 1-5"
+    - cron: "30 23 * * 1-5"
+  workflow_dispatch: {}   # adds a "Run workflow" button on GitHub
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-ldc
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch prices
+        run: python scripts/fetch_ldc.py
+
+      - name: Commit data if changed
+        run: |
+          if [ -n "$(git status --porcelain data)" ]; then
+            git config user.name "price-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data
+            git commit -m "Update LDC prices $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase
+            git push
+          else
+            echo "No price changes."
+          fi
