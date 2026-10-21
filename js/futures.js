@@ -10,7 +10,7 @@ export default {
   title: 'Futures',
   liveOn: ['prices'],
   render(root) {
-    root.append(h('h2', {}, 'Futures'), h('p', { class: 'sub' },
+    root.append(h('p', { class: 'sub' },
       data.getLatest() ? `From LDC · delayed 10 min · updated ${timeAgo(data.getLatest().updatedAt)}` : 'Loading…'));
     const avail = FUTURES.filter((f) => data.futures(f.key).length);
     if (!avail.length) return;

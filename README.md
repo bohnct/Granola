@@ -6,7 +6,7 @@ An iPhone home-screen app (PWA) for grain marketing:
 - **Futures**: ICE canola futures from LDC's feed (10-min delay), with daily closes saved from launch day.
 - **Inventory**: production, sales targets, price targets, sold vs unsold, income, and unsold value at today's LDC bid.
 - **Sales**: record every sale (bu or MT, $/bu or $/MT, contract #, delivery month). Stored in **your Google Sheet**.
-- **Calc**: a grid of calculators: Field Work (acres/hr, time, Sask custom rates), Grain Drying (shrink), Acre Profit, and Conversions (bu↔tonnes, $/bu↔$/MT, cash = futures + basis, truck load, bin value, yield).
+- **Calc**: a grid of calculators: Field Work (acres/hr, time, Sask custom rates), Grain Drying (shrink), Acre Profit, Fert Blend (N-P-K-S targets to product rates and cost), and Conversions (bu↔tonnes, $/bu↔$/MT, cash = futures + basis, truck load, bin value, yield).
 
 ## How it fits together
 

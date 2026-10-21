@@ -33,8 +33,8 @@ export default {
   render(root) {
     const fac = data.facility();
     const facName = FACILITIES.find((f) => f.key === DEFAULT_FACILITY)?.name;
-    root.append(h('h2', {}, facName), h('p', { class: 'sub' },
-      data.getLatest() ? `Cash bids · prices updated ${timeAgo(data.getLatest().updatedAt)} · delayed 10 min` : 'Loading…'));
+    root.append(h('p', { class: 'sub' },
+      data.getLatest() ? `${facName} cash bids · updated ${timeAgo(data.getLatest().updatedAt)} · delayed 10 min` : 'Loading…'));
     if (!fac) return;
 
     const coms = Object.keys(fac.cashBids);

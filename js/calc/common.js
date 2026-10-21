@@ -4,7 +4,8 @@ import { h, numberInput, parseNum, field } from '../ui.js';
 export const fmtIn = (v, d = 3) => (v == null || !Number.isFinite(v) ? '' : String(+v.toFixed(d)));
 
 export function card(title, sub, ...body) {
-  return h('div', { class: 'card' }, h('h3', {}, title), sub ? h('p', { class: 'small muted', style: 'margin-top:-4px' }, sub) : null, ...body);
+  return h('div', { class: 'card' }, title ? h('h3', {}, title) : null,
+    sub ? h('p', { class: 'small muted', style: title ? 'margin-top:-4px' : 'margin-top:0' }, sub) : null, ...body);
 }
 
 export const resultBox = () => h('div', { class: 'result' });

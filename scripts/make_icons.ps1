@@ -1,32 +1,59 @@
-# Draws the Bohn AgVentures app icons (orange lettering on dark grey).
-# Windows only (uses the built-in System.Drawing + Segoe UI fonts).
+# Draws the Bohn AgVentures app icons: a white canola flower on solid black.
+# Windows only (uses the built-in System.Drawing).
 # Run:  powershell -ExecutionPolicy Bypass -File scripts\make_icons.ps1
 Add-Type -AssemblyName System.Drawing
 
 $out = Join-Path $PSScriptRoot '..\icons'
-$grey = [System.Drawing.ColorTranslator]::FromHtml('#2E3033')
-$orange = [System.Drawing.ColorTranslator]::FromHtml('#F28C28')
+$black = [System.Drawing.Color]::Black
+$white = [System.Drawing.Color]::White
+
+# One petal pointing straight up from the centre, on a 180px grid centred at (90, 90).
+# Narrow at the base, wide and rounded at the tip with a soft notch, like a canola petal.
+function Petal-Path {
+  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $pts = [System.Drawing.PointF[]]@(
+    (New-Object System.Drawing.PointF 90, 86),
+    (New-Object System.Drawing.PointF 82, 76), (New-Object System.Drawing.PointF 63, 54), (New-Object System.Drawing.PointF 64, 34),
+    (New-Object System.Drawing.PointF 65, 17), (New-Object System.Drawing.PointF 82, 12), (New-Object System.Drawing.PointF 90, 17),
+    (New-Object System.Drawing.PointF 98, 12), (New-Object System.Drawing.PointF 115, 17), (New-Object System.Drawing.PointF 116, 34),
+    (New-Object System.Drawing.PointF 117, 54), (New-Object System.Drawing.PointF 98, 76), (New-Object System.Drawing.PointF 90, 86)
+  )
+  $p.AddBeziers($pts)
+  $p.CloseFigure()
+  return $p
+}
 
 function Draw-Icon([int]$size) {
   $k = $size / 180.0
   $bmp = New-Object System.Drawing.Bitmap $size, $size
   $g = [System.Drawing.Graphics]::FromImage($bmp)
   $g.SmoothingMode = 'AntiAlias'
-  $g.TextRenderingHint = 'AntiAliasGridFit'
-  $g.Clear($grey)
-  $brush = New-Object System.Drawing.SolidBrush $orange
-  $fmt = New-Object System.Drawing.StringFormat
-  $fmt.Alignment = 'Center'
-  $fmt.LineAlignment = 'Center'
+  $g.PixelOffsetMode = 'HighQuality'
+  $g.Clear($black)
+  $g.ScaleTransform($k, $k)
 
-  # Layout is on a 180px grid (matches the approved preview).
-  $big = New-Object System.Drawing.Font 'Segoe UI Black', ([single](44 * $k)), ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
-  $g.DrawString('BOHN', $big, $brush, (New-Object System.Drawing.RectangleF 0, ([single](49 * $k)), $size, ([single](48 * $k))), $fmt)
+  $whiteBrush = New-Object System.Drawing.SolidBrush $white
+  $blackBrush = New-Object System.Drawing.SolidBrush $black
+  $vein = New-Object System.Drawing.Pen $black, 1.4
+  $vein.StartCap = 'Round'; $vein.EndCap = 'Round'
 
-  $g.FillRectangle($brush, [single](40 * $k), [single](99 * $k), [single](100 * $k), [single](3.5 * $k))
+  # Four petals in an X, the way canola flowers sit.
+  foreach ($angle in 45, 135, 225, 315) {
+    $petal = Petal-Path
+    $m = New-Object System.Drawing.Drawing2D.Matrix
+    $m.RotateAt($angle, (New-Object System.Drawing.PointF 90, 90))
+    $petal.Transform($m)
+    $g.FillPath($whiteBrush, $petal)
 
-  $small = New-Object System.Drawing.Font 'Segoe UI Semibold', ([single](22 * $k)), ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
-  $g.DrawString('AgVentures', $small, $brush, (New-Object System.Drawing.RectangleF 0, ([single](106 * $k)), $size, ([single](28 * $k))), $fmt)
+    # Centre vein, drawn in black so it reads as a fine groove.
+    $veinPath = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $veinPath.AddLine(90, 66, 90, 40)
+    $veinPath.Transform($m)
+    $g.DrawPath($vein, $veinPath)
+  }
+
+  # Centre: a plain round opening where the petals meet.
+  $g.FillEllipse($blackBrush, 79, 79, 22, 22)
 
   $path = Join-Path $out "icon-$size.png"
   $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)

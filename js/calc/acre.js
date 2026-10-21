@@ -23,33 +23,45 @@ export function renderAcre(root) {
   const price = numberInput({ value: state.price, placeholder: '18.43' });
   const yld = numberInput({ value: saved.yield ?? '', placeholder: '50' });
   const cost = numberInput({ value: saved.cost ?? '', placeholder: 'Optional' });
-  const sub = h('p', { class: 'small muted', style: 'margin-top:-4px' });
+  const acres = numberInput({ value: saved.acres ?? '', placeholder: 'Optional' });
+  const sub = h('p', { class: 'small muted', style: 'margin-top:0' });
   const out = resultBox();
 
   const calc = () => {
     state.price = price.value;
-    saveAcre(state.com, { yield: yld.value, cost: cost.value });
+    saveAcre(state.com, { yield: yld.value, cost: cost.value, acres: acres.value });
     sub.textContent = state.from ? `Price from LDC ${commodity(state.com)?.name} ${state.from} bid.` : 'Price × yield. Add costs to see profit.';
-    const p = parseNum(price.value), y = parseNum(yld.value), c = parseNum(cost.value);
+    const p = parseNum(price.value), y = parseNum(yld.value), c = parseNum(cost.value), a = parseNum(acres.value);
     if (p == null || y == null) {
       out.replaceChildren(hint('Enter a price and your yield. Tip: double-tap a bid on the Offers tab to fill the price.'));
       return;
     }
     const revenue = p * y;
+    const profitSpan = (v, suffix = '', digits = 2) => h('span', { class: v >= 0 ? 'up' : 'down' }, `${money(v, digits)}${suffix}`);
+    const totals = a ? [
+      h('hr', { class: 'split' }),
+      line(`Total for ${num(a, 0)} acres`, ''),
+      line('Bushels', num(y * a, 0)),
+      line('Revenue', money(revenue * a, 0)),
+      c != null ? line('Costs', money(c * a, 0)) : '',
+      c != null ? line('Total profit', profitSpan((revenue - c) * a, '', 0)) : '',
+    ] : [];
     out.replaceChildren(
       line('Revenue per acre', `${money(revenue)}/ac`),
       line('Yield in tonnes', `${num(U.buToMt(y, state.com), 3)} MT/ac`),
-      c != null ? line('Profit per acre', h('span', { class: revenue - c >= 0 ? 'up' : 'down' }, `${money(revenue - c)}/ac`)) : '',
-      c != null && y ? line('Break-even price', `${money(c / y)}/bu`) : '');
+      c != null ? line('Profit per acre', profitSpan(revenue - c, '/ac')) : '',
+      c != null && y ? line('Break-even price', `${money(c / y)}/bu`) : '',
+      ...totals);
   };
   price.addEventListener('input', () => { state.from = ''; calc(); });
-  [yld, cost].forEach((el) => el.addEventListener('input', calc));
+  [yld, cost, acres].forEach((el) => el.addEventListener('input', calc));
   calc();
 
-  const el = card('Revenue per acre', null, sub,
+  const el = card(null, null, sub,
     field('Commodity', comSel),
     h('div', { class: 'grid2' }, field('Price $/bu', price), field('Yield bu/ac', yld)),
-    field('Costs $/ac', cost, 'Seed, fert, chem, land… leave blank for revenue only.'),
+    h('div', { class: 'grid2' }, field('Costs $/ac', cost), field('Acres', acres)),
+    h('p', { class: 'small muted', style: 'margin:-4px 0 10px' }, 'Costs: seed, fert, chem, land… Add acres for whole-field totals. Both optional.'),
     out);
   root.append(el);
   if (state.flash) {

@@ -23,7 +23,7 @@ export default {
     const redraw = () => { root.replaceChildren(); this.render(root); };
 
     root.append(
-      h('div', { class: 'row' }, h('h2', {}, 'Sales'),
+      h('div', { class: 'row' }, h('div', {}),
         h('div', { class: 'right' }, h('button', { type: 'button', class: 'btn primary sm', onclick: () => editSale() }, '+ Add sale'))),
       h('div', { class: 'row' },
         select(L.years().map((y) => ({ value: String(y), label: `${y} crop` })), String(state.year),

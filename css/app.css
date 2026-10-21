@@ -25,7 +25,7 @@
 /* Dark palette. Kept in two identical blocks: one for "follow the phone", one for "Dark" in Settings. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d0d0e;
+    --bg: #000000;
     --surface: #18191b;
     --surface-2: #232427;
     --text: #eceae6;
@@ -45,7 +45,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0d0d0e;
+  --bg: #000000;
   --surface: #18191b;
   --surface-2: #232427;
   --text: #eceae6;
@@ -260,3 +260,17 @@ dialog.sheet .sheet-body { padding: 12px 16px calc(20px + env(safe-area-inset-bo
 }
 .tile-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .back { display: inline-block; padding: 6px 0; color: var(--brand); font-weight: 600; text-decoration: none; }
+.result hr.split { border: 0; border-top: 1px solid var(--line); margin: 8px 0 6px; }
+table.mini th, table.mini td { padding: 6px 4px; background: transparent; }
+table.mini th:first-child, table.mini td:first-child { padding-left: 0; white-space: normal; }
+table.mini th:last-child, table.mini td:last-child { padding-right: 0; }
+
+/* Chips: wrap-around tap buttons (Field Work picker) */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.chips[hidden] { display: none; }
+.chip {
+  font: inherit; font-size: 14px; font-weight: 600; padding: 9px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--text); touch-action: manipulation;
+}
+.chip.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.seg.tight button { padding: 8px 4px; font-size: 13px; }

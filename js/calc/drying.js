@@ -50,7 +50,7 @@ export function renderDrying(root) {
   calc();
 
   root.append(
-    card('Grain drying', 'Weight after taking grain down to a target moisture.',
+    card(null, 'Weight after taking grain down to a target moisture.',
       field('Commodity', com, 'Used for bushel conversions.'),
       h('div', { class: 'grid2' }, field('Wet weight', w), field('Unit', unit)),
       h('div', { class: 'grid2' }, field('Moisture %', from), field('Target %', to)),

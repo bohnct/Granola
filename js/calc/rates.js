@@ -9,7 +9,7 @@ export const GUIDE = { name: 'Sask 2026-27 Custom Rate Guide', fieldEfficiency: 
 const T = (name, size, perHr, acPerHr = null, perAc = null) => ({ name, size, perHr, acPerHr, perAc });
 
 export const RATE_GROUPS = [
-  { group: 'Seeding', items: [
+  { group: 'Seeding', short: 'Seed', items: [
     T('Air drill, independent openers', '25-45 ft', 613.47, 14, 43.82),
     T('Air drill, independent openers', '46-65 ft', 858.12, 23, 37.31),
     T('Air drill, independent openers', '66-86 ft', 1015.12, 30, 33.84),
@@ -23,13 +23,13 @@ export const RATE_GROUPS = [
     T('Split row planter', '12/24 row', 799.23, 19, 42.06),
     T('Split row planter', '16/32 row', 980.25, 25, 39.21),
   ] },
-  { group: 'Spraying', items: [
+  { group: 'Spraying', short: 'Spray', items: [
     T('High clearance sprayer', '800 gal, 90 ft', 684.80, 70, 9.78),
     T('High clearance sprayer', '1000 gal, 100 ft', 752.30, 78, 9.64),
     T('High clearance sprayer', '1200 gal, 120 ft', 868.50, 93, 9.34),
     T('High clearance sprayer', '1600 gal, 130 ft', 984.70, 101, 9.75),
   ] },
-  { group: 'Harvesting', items: [
+  { group: 'Harvesting', short: 'Harvest', items: [
     T('Combine, Class 6', '301-360 hp', 505.89, 10, 50.59),
     T('Combine, Class 7', '361-420 hp', 599.04, 12, 49.92),
     T('Combine, Class 8', '421-500 hp', 684.79, 15, 45.65),
@@ -43,7 +43,7 @@ export const RATE_GROUPS = [
     T('Grain cart + 4WD', '1050-1600 bu', 426.69),
     T('Grain cart + 4WD', '2000 bu', 496.81),
   ] },
-  { group: 'Tillage & land rolling', items: [
+  { group: 'Tillage & land rolling', short: 'Tillage', items: [
     T('Field cultivator', '24-35 ft', 301.04, 15, 20.07),
     T('Field cultivator', '36-49 ft', 370.19, 21, 17.63),
     T('Field cultivator', '50-62 ft', 422.44, 27, 15.65),
@@ -61,7 +61,7 @@ export const RATE_GROUPS = [
     T('Land roller', '40-50 ft', 339.00, 26, 13.04),
     T('Land roller', '55-75 ft', 433.70, 38, 11.41),
   ] },
-  { group: 'Hay', items: [
+  { group: 'Hay', short: 'Hay', items: [
     T('SP disc mower conditioner', '13-19 ft', 327.59, 12, 27.30),
     T('SP disc mower conditioner', '30 ft', 654.58, 23, 28.46),
     T('SP sickle mower conditioner', '14-18 ft', 313.95, 9, 34.88),

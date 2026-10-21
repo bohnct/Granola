@@ -23,7 +23,7 @@ export default {
   render(root) {
     const qty = (bu, com) => (state.unit === 'bu' ? `${num(bu, 0)} bu` : `${num(U.buToMt(bu, com), 1)} MT`);
     root.append(
-      h('h2', {}, 'Inventory'), syncLine(),
+      syncLine(),
       h('div', { class: 'row' },
         select(L.years().map((y) => ({ value: String(y), label: `${y} crop` })), String(state.year), {
           onchange: (e) => { state.year = Number(e.target.value); rerender(); },
