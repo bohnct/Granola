@@ -3,7 +3,7 @@ import * as data from './data.js';
 import { DEFAULT_FACILITY, FACILITIES } from './config.js';
 import { h, num, money, segmented, timeAgo } from './ui.js';
 import { lineChart } from './chart.js';
-import { prefillAcre } from './calc.js';
+import { prefillAcre } from './calc/acre.js';
 
 const state = { com: 'canola', unit: 'MT', sel: null, chart: 'price' };
 const DOUBLE_TAP_MS = 350;
@@ -15,7 +15,7 @@ function onRowTap(bid, single) {
   if (lastTap.label === bid.label && now - lastTap.at < DOUBLE_TAP_MS) {
     lastTap = { label: null, at: 0 };
     prefillAcre({ com: state.com, pricePerBu: bid.price / bid.buPerUnit, label: bid.label });
-    location.hash = '#calc';
+    location.hash = '#calc/acre';
     return;
   }
   lastTap = { label: bid.label, at: now };

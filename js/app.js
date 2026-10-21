@@ -17,25 +17,26 @@ const banner = document.getElementById('banner');
 const refreshBtn = document.getElementById('refresh');
 let current = null;
 
-function tabFromHash() {
-  const t = location.hash.slice(1);
-  return TABS[t] ? t : 'offers';
+// Hash is "#tab" or "#tab/page" (e.g. "#calc/field").
+function route() {
+  const [t, sub = ''] = location.hash.slice(1).split('/');
+  return TABS[t] ? { name: t, sub } : { name: 'offers', sub: '' };
 }
 
 function render() {
-  const name = tabFromHash();
+  const { name, sub } = route();
   const tab = TABS[name];
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === name));
-  document.getElementById('title').textContent = tab.title;
-  if (current !== name) window.scrollTo(0, 0);
-  current = name;
+  document.getElementById('title').textContent = typeof tab.title === 'function' ? tab.title(sub) : tab.title;
+  if (current !== `${name}/${sub}`) window.scrollTo(0, 0);
+  current = `${name}/${sub}`;
   view.replaceChildren();
-  tab.render(view);
+  tab.render(view, sub);
 }
 
 // Re-render live tabs when new data arrives; calculators keep their inputs.
 function rerender(kind) {
-  const tab = TABS[current];
+  const tab = TABS[route().name];
   if (tab?.liveOn?.includes(kind)) render();
   updateBanner();
 }

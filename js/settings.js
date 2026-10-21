@@ -3,7 +3,8 @@ import * as sheets from './sheets.js';
 import { getItem, setItem } from './db.js';
 import { COMMODITIES } from './config.js';
 import { setOverrides, defaultBuPerMt } from './units.js';
-import { h, field, numberInput, openSheet, toast, parseNum, timeAgo } from './ui.js';
+import { getTheme, setTheme } from './theme.js';
+import { h, field, numberInput, openSheet, toast, parseNum, timeAgo, segmented } from './ui.js';
 
 export async function openSettings(onSaved) {
   const cfg = sheets.getConfig();
@@ -44,6 +45,10 @@ export async function openSettings(onSaved) {
   const resetWeights = () => weightInputs.forEach(({ c, input }) => { input.value = String(c.buPerMt); });
 
   openSheet('Settings',
+    h('div', { class: 'card' },
+      h('h3', {}, 'Theme'),
+      segmented([{ value: 'light', label: 'White' }, { value: 'dark', label: 'Black' }, { value: 'auto', label: 'Match phone' }],
+        getTheme(), setTheme)),
     h('div', { class: 'card' },
       h('h3', {}, 'Google Sheet (inventory & sales)'),
       h('p', { class: 'small muted' }, 'Paste the Apps Script web app URL and the TOKEN you set in its Script properties. See README for setup.'),

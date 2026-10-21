@@ -1,13 +1,14 @@
 // Service worker: app files cache-first (offline), price data network-first.
 // Bump VERSION whenever app files change so phones pick up the new version.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = 'data';
 const APP_FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/config.js', 'js/units.js', 'js/ui.js', 'js/data.js', 'js/db.js', 'js/sheets.js',
   'js/ledger.js', 'js/settings.js', 'js/chart.js', 'js/offers.js', 'js/futures.js', 'js/inventory.js',
-  'js/sales.js', 'js/calc.js', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
+  'js/sales.js', 'js/calc.js', 'js/theme.js', 'js/calc/common.js', 'js/calc/rates.js', 'js/calc/field.js',
+  'js/calc/drying.js', 'js/calc/acre.js', 'js/calc/convert.js', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

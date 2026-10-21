@@ -1,4 +1,4 @@
-// Futures tab: LDC's futures feed (Canola ICE, Soybeans + Corn CBOT) with daily history.
+// Futures tab: LDC's futures feed (ICE canola; see FUTURES in config.js) with daily history.
 import * as data from './data.js';
 import { FUTURES } from './config.js';
 import { h, num, signed, changeClass, segmented, timeAgo } from './ui.js';
@@ -18,8 +18,11 @@ export default {
 
     const body = h('div');
     const draw = () => body.replaceChildren(table(), detail());
-    root.append(segmented(avail.map((f) => ({ value: f.key, label: f.name })), state.key,
-      (v) => { state.key = v; state.sel = null; draw(); }), body);
+    if (avail.length > 1) {
+      root.append(segmented(avail.map((f) => ({ value: f.key, label: f.name })), state.key,
+        (v) => { state.key = v; state.sel = null; draw(); }));
+    }
+    root.append(body);
     draw();
 
     function meta() { return FUTURES.find((f) => f.key === state.key); }

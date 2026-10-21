@@ -3,10 +3,10 @@
 An iPhone home-screen app (PWA) for grain marketing:
 
 - **Offers**: LDC Yorkton cash bids for Canola and Nexera by delivery month ($/MT and $/bu), with daily history.
-- **Futures**: ICE canola, soybean and corn futures from LDC's feed (10-min delay), with daily closes saved from launch day.
+- **Futures**: ICE canola futures from LDC's feed (10-min delay), with daily closes saved from launch day.
 - **Inventory**: production, sales targets, price targets, sold vs unsold, income, and unsold value at today's LDC bid.
 - **Sales**: record every sale (bu or MT, $/bu or $/MT, contract #, delivery month). Stored in **your Google Sheet**.
-- **Calc**: bu↔tonnes, $/bu↔$/MT, cash = futures + basis, truck load value after dockage, bin value, yield.
+- **Calc**: a grid of calculators: Field Work (acres/hr, time, Sask custom rates), Grain Drying (shrink), Acre Profit, and Conversions (bu↔tonnes, $/bu↔$/MT, cash = futures + basis, truck load, bin value, yield).
 
 ## How it fits together
 
@@ -28,6 +28,8 @@ An iPhone home-screen app (PWA) for grain marketing:
 | `index.html`, `css/app.css` | App layout and styling |
 | `js/config.js` | **Edit to expand**: commodities, bushel weights, which crops appear in Inventory |
 | `js/offers.js`, `futures.js`, `inventory.js`, `sales.js`, `calc.js` | One file per tab |
+| `js/calc/` | One file per calculator page; `rates.js` holds the Sask custom rate guide numbers |
+| `js/theme.js` | White/Black theme choice from Settings |
 | `js/units.js`, `ledger.js` | Conversions and inventory/sales math |
 | `js/sheets.js`, `google-apps-script/Code.gs` | Google Sheet sync (app side / Google side) |
 | `js/data.js`, `chart.js` | Load price data, draw history charts |
@@ -65,6 +67,14 @@ An iPhone home-screen app (PWA) for grain marketing:
 - LDC prices are public web data delayed at least 10 minutes. Confirm with LDC before contracting.
 - After changing app files, bump `VERSION` in `sw.js` so phones load the new version.
 - Add another LDC elevator: add it to `FACILITIES` in `scripts/fetch_ldc.py` (its id comes from `https://www.myldc.com/api/general/facility/public?shortcut=<name>`) and to `js/config.js`.
+
+## Updating the app without losing price history
+The LDC offer, basis and futures history lives **only in the GitHub repo**, in `data/history/*.json` (plus `data/latest.json`). The GitHub Action adds to these files and commits them every 15 minutes. LDC doesn't publish past prices, so if these files are overwritten, that history can't be fetched again.
+
+The copy of `data/` on your PC is **not** kept up to date. It's whatever was there when you last uploaded.
+
+- When you upload changed app files, upload **only the files you changed**. **Never upload the `data/` folder.** Uploading it replaces the live history with your old copy.
+- To keep a backup: on GitHub, **Code → Download ZIP** now and then. Git history also keeps every past version of each file, so a bad upload can be undone by restoring the earlier version.
 
 ## Run locally
 ```

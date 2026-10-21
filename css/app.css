@@ -1,5 +1,6 @@
-/* Bohn AgVentures theme: orange on dark grey. Follows the iPhone light/dark setting;
-   the header bar stays dark grey with orange lettering in both. */
+/* Bohn AgVentures theme: orange on black. Light or dark is picked in Settings
+   (html[data-theme]); with no choice it follows the iPhone setting.
+   The header bar is black with orange lettering in both. */
 :root {
   --bg: #f2f1ef;
   --surface: #ffffff;
@@ -7,12 +8,12 @@
   --text: #1f2023;
   --muted: #66686d;
   --line: #dcdad6;
-  --bar: #2e3033;        /* header bar */
+  --bar: #000000;        /* header bar */
   --bar-ink: #f28c28;    /* header lettering */
   --tabbar: #ffffff;
   --brand: #d26f0f;      /* orange accents: active tab, buttons, charts */
   --brand-ink: #ffffff;  /* text on orange buttons */
-  --accent: #2e3033;     /* target marker on progress bars */
+  --accent: #1f2023;     /* target marker on progress bars */
   --up: #1d7a3e;
   --down: #b3261e;
   --warn-bg: #fdecd9;
@@ -21,26 +22,46 @@
   --tabbar-h: 58px;
   color-scheme: light;
 }
+/* Dark palette. Kept in two identical blocks: one for "follow the phone", one for "Dark" in Settings. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1e1f21;
-    --surface: #2a2c2f;
-    --surface-2: #35383c;
+  :root:not([data-theme="light"]) {
+    --bg: #0d0d0e;
+    --surface: #18191b;
+    --surface-2: #232427;
     --text: #eceae6;
-    --muted: #a0a2a6;
-    --line: #3d4044;
-    --bar: #2e3033;
+    --muted: #9a9ca0;
+    --line: #2b2c30;
+    --bar: #000000;
     --bar-ink: #f28c28;
-    --tabbar: #2e3033;
+    --tabbar: #000000;
     --brand: #f28c28;
-    --brand-ink: #1e1f21;
+    --brand-ink: #0d0d0e;
     --accent: #eceae6;
     --up: #5cc882;
     --down: #ff7a6e;
-    --warn-bg: #4a3215;
+    --warn-bg: #3d2910;
     --warn-ink: #ffd2a1;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #0d0d0e;
+  --surface: #18191b;
+  --surface-2: #232427;
+  --text: #eceae6;
+  --muted: #9a9ca0;
+  --line: #2b2c30;
+  --bar: #000000;
+  --bar-ink: #f28c28;
+  --tabbar: #000000;
+  --brand: #f28c28;
+  --brand-ink: #0d0d0e;
+  --accent: #eceae6;
+  --up: #5cc882;
+  --down: #ff7a6e;
+  --warn-bg: #3d2910;
+  --warn-ink: #ffd2a1;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -222,3 +243,20 @@ dialog.sheet .sheet-body { padding: 12px 16px calc(20px + env(safe-area-inset-bo
 .sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
 .sync.ok i { background: var(--up); }
 .sync.error i, .sync.offline i { background: var(--down); }
+
+/* Calculator tiles ------------------------------------------------------- */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tile {
+  display: flex; flex-direction: column; gap: 6px; min-height: 132px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--text); text-decoration: none; touch-action: manipulation;
+}
+.tile:active { background: var(--surface-2); }
+.tile b { font-size: 17px; }
+.tile span { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.tile-icon {
+  width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 4px;
+  background: color-mix(in srgb, var(--brand) 16%, transparent); color: var(--brand);
+}
+.tile-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.back { display: inline-block; padding: 6px 0; color: var(--brand); font-weight: 600; text-decoration: none; }

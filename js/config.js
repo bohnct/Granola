@@ -23,12 +23,10 @@ export const COMMODITIES = [
   { id: 'corn',     name: 'Corn',     buPerMt: 39.368, futuresKey: 'corn' },
 ];
 
-// Futures shown on the Futures tab, in order. LDC quotes canola in $/MT CAD,
-// soybeans and corn in US cents per bushel.
+// Futures shown on the Futures tab, in order. LDC quotes canola in $/MT CAD.
+// LDC's feed also has soybeans and corn (CBOT, US ¢/bu); add them back here to show them.
 export const FUTURES = [
   { key: 'canola',   name: 'Canola',   unit: 'CAD/MT', exchange: 'ICE' },
-  { key: 'soybeans', name: 'Soybeans', unit: '¢/bu',   exchange: 'CBOT' },
-  { key: 'corn',     name: 'Corn',     unit: '¢/bu',   exchange: 'CBOT' },
 ];
 
 export const commodity = (id) => COMMODITIES.find((c) => c.id === id);
