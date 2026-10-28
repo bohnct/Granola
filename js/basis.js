@@ -3,7 +3,7 @@
 import * as data from './data.js';
 import * as prefs from './prefs.js';
 import { COMMODITIES, commodity } from './config.js';
-import { h, signed, changeClass } from './ui.js';
+import { h, signed, changeClass, showFirst } from './ui.js';
 import { shortDate } from './chart.js';
 import { monthsChart } from './monthschart.js';
 
@@ -23,7 +23,7 @@ export default {
       const com = prefs.get('com');
       body.replaceChildren(...[monthsChart(com, byCom[com].hist), board(com, byCom[com].hist), premium(byCom), feed(byCom)].filter(Boolean));
     };
-    root.append(prefs.commodityPicker(draw), prefs.unitPicker(draw), body);
+    root.append(body);
     draw();
   },
 };
@@ -95,17 +95,17 @@ function feed(byCom) {
     }
   }
   items.sort((x, y) => (y.t ?? y.d).localeCompare(x.t ?? x.d));
-  const shown = items.slice(0, 60);
-  return h('div', { class: 'card tight' },
-    h('h3', { class: 'pad' }, 'Recent basis changes'),
-    shown.length
-      ? shown.map((m) => {
-        const div = prefs.unitDiv(m.com.key);
-        return h('div', { class: 'item', 'data-click': '', onclick: () => { location.hash = `#history/${m.com.key}/${encodeURIComponent(m.label)}`; } },
-          h('div', { class: 'main' }, h('b', {}, `${m.label} · ${m.com.short}`),
-            h('span', {}, m.t ? new Date(m.t).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : shortDate(m.d))),
-          h('div', { class: 'amt' }, h('b', { class: changeClass(m.to - m.from) }, signed((m.to - m.from) / div, 2)),
-            h('span', { class: 'small muted' }, `${signed(m.from / div, 2)} → ${signed(m.to / div, 2)}`)));
-      })
-      : h('p', { class: 'empty small' }, 'No basis changes recorded yet. They show up here as LDC moves its basis.'));
+  if (!items.length) {
+    return h('div', { class: 'card tight' }, h('h3', { class: 'pad' }, 'Recent basis changes'),
+      h('p', { class: 'empty small' }, 'No basis changes recorded yet. They show up here as LDC moves its basis.'));
+  }
+  const rows = items.slice(0, 200).map((m) => {
+    const div = prefs.unitDiv(m.com.key);
+    return h('div', { class: 'item', 'data-click': '', onclick: () => { location.hash = `#history/${m.com.key}/${encodeURIComponent(m.label)}`; } },
+      h('div', { class: 'main' }, h('b', {}, `${m.label} · ${m.com.short}`),
+        h('span', {}, m.t ? new Date(m.t).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : shortDate(m.d))),
+      h('div', { class: 'amt' }, h('b', { class: changeClass(m.to - m.from) }, signed((m.to - m.from) / div, 2)),
+        h('span', { class: 'small muted' }, `${signed(m.from / div, 2)} → ${signed(m.to / div, 2)}`)));
+  });
+  return h('div', { class: 'card tight clip' }, h('h3', { class: 'pad' }, 'Recent basis changes'), rows, showFirst(rows, 5));
 }

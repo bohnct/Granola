@@ -3,7 +3,7 @@
 import * as data from './data.js';
 import * as prefs from './prefs.js';
 import { COMMODITIES } from './config.js';
-import { h, num, money, signed, changeClass, segmented } from './ui.js';
+import { h, num, money, signed, changeClass, segmented, showFirst } from './ui.js';
 import { timeChart, shortDate } from './chart.js';
 import { RANGES, rangeStart } from './ranges.js';
 
@@ -19,7 +19,7 @@ export default {
 
     const body = h('div', {}, h('p', { class: 'small muted' }, 'Loading…'));
     const go = (com, label) => { location.hash = `#history/${com}${label ? `/${encodeURIComponent(label)}` : ''}`; };
-    root.append(prefs.commodityPicker((v) => go(v)), body);
+    root.append(body);
 
     const com = prefs.get('com');
     Promise.all([data.cashHistory(com), data.basisChanges(com)]).then(([hist, changes]) => {
@@ -37,7 +37,6 @@ export default {
       body.replaceChildren(
         h('label', { class: 'field' }, h('span', {}, 'Delivery period'), picker),
         segmented(RANGES, prefs.get('range'), (v) => { prefs.set('range', v); draw(); }),
-        prefs.unitPicker(draw),
         detail);
       draw();
     });
@@ -80,37 +79,58 @@ function view(com, cur, changes) {
       timeChart([
         { name: 'Cash', cls: 's1', points: rows.map((r) => ({ d: r.d, v: r.price / div })) },
         { name: 'Futures', cls: 's2', points: rows.map((r) => ({ d: r.d, v: r.fut / div })) },
-      ], { empty: 'The chart needs two saved days.' })),
+      ], {
+        empty: 'The chart needs two saved days.',
+        // The gap between the lines is the basis; show it in the readout too.
+        extra: (vals) => (vals.Cash != null && vals.Futures != null ? ['Basis', signed(vals.Cash - vals.Futures, 2)] : null),
+      })),
 
     h('div', { class: 'card' },
       h('h3', {}, `Basis (${unit})`),
       timeChart([{ name: 'Basis', cls: 's1', step: true, points: rows.map((r) => ({ d: r.d, v: r.basis / div })) }],
-        { zero: true, height: 160, empty: 'The chart needs two saved days.' }),
+        { zero: true, height: 170, empty: 'The chart needs two saved days.' }),
       h('p', { class: 'small muted', style: 'margin:6px 0 0' }, 'Basis = cash − futures. Higher (less negative) is better for the seller.')),
 
-    moves.length ? h('div', { class: 'card tight' },
-      h('h3', { class: 'pad' }, 'Basis changes'),
-      h('table', {},
-        h('thead', {}, h('tr', {}, h('th', {}, 'When'), h('th', {}, 'From'), h('th', {}, 'To'), h('th', {}, 'Change'))),
-        h('tbody', {}, moves.slice().reverse().map((m) => h('tr', {},
-          h('td', {}, when(m.t)),
-          h('td', {}, signed(m.from / div, 2)),
-          h('td', {}, signed(m.to / div, 2)),
-          h('td', { class: changeClass(m.to - m.from) }, signed((m.to - m.from) / div, 2))))))) : null,
-
-    h('div', { class: 'card tight scroll-x' },
-      h('h3', { class: 'pad' }, 'Daily record'),
-      h('table', {},
-        h('thead', {}, h('tr', {}, h('th', {}, 'Date'), h('th', {}, 'Futures'), h('th', {}, 'Basis'), h('th', {}, 'Cash'))),
-        h('tbody', {}, rows.slice().reverse().map((r, i, arr) => {
-          const prev = arr[i + 1];
-          const moved = prev && prev.basis !== r.basis;
-          return h('tr', { class: moved ? 'moved' : '' },
-            h('td', {}, shortDate(r.d), r.sym ? h('small', {}, r.sym) : null),
-            h('td', {}, num(r.fut / div, 2)),
-            h('td', {}, signed(r.basis / div, 2),
-              moved ? h('small', { class: changeClass(r.basis - prev.basis) }, signed((r.basis - prev.basis) / div, 2)) : null),
-            h('td', {}, money(r.price / div)));
-        })))),
+    changesCard(moves, rows, div),
+    recordCard(rows, div),
   ];
+}
+
+// Every basis move, newest first. Before the intraday log existed, worked out from the daily rows.
+function changesCard(moves, rows, div) {
+  const list = moves.length
+    ? moves.map((m) => ({ when: when(m.t), from: m.from, to: m.to }))
+    : rows.flatMap((r, i) => (i && r.basis !== rows[i - 1].basis ? [{ when: shortDate(r.d), from: rows[i - 1].basis, to: r.basis }] : []));
+  if (!list.length) return null;
+  const trs = list.reverse().map((m) => h('tr', {},
+    h('td', {}, m.when),
+    h('td', {}, signed(m.from / div, 2)),
+    h('td', {}, signed(m.to / div, 2)),
+    h('td', { class: changeClass(m.to - m.from) }, signed((m.to - m.from) / div, 2))));
+  return h('div', { class: 'card tight clip' },
+    h('h3', { class: 'pad' }, `Basis changes (${list.length})`),
+    h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, 'When'), h('th', {}, 'From'), h('th', {}, 'To'), h('th', {}, 'Change'))),
+      h('tbody', {}, trs)),
+    showFirst(trs, 5));
+}
+
+// One row per saved day, newest first; basis moves in bold.
+function recordCard(rows, div) {
+  const trs = rows.slice().reverse().map((r, i, arr) => {
+    const prev = arr[i + 1];
+    const moved = prev && prev.basis !== r.basis;
+    return h('tr', { class: moved ? 'moved' : '' },
+      h('td', {}, shortDate(r.d), r.sym ? h('small', {}, r.sym) : null),
+      h('td', {}, num(r.fut / div, 2)),
+      h('td', {}, signed(r.basis / div, 2),
+        moved ? h('small', { class: changeClass(r.basis - prev.basis) }, signed((r.basis - prev.basis) / div, 2)) : null),
+      h('td', {}, money(r.price / div)));
+  });
+  return h('div', { class: 'card tight scroll-x clip' },
+    h('h3', { class: 'pad' }, `Daily record (${rows.length} days)`),
+    h('table', {},
+      h('thead', {}, h('tr', {}, h('th', {}, 'Date'), h('th', {}, 'Futures'), h('th', {}, 'Basis'), h('th', {}, 'Cash'))),
+      h('tbody', {}, trs)),
+    showFirst(trs, 5));
 }

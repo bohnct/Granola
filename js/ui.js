@@ -58,3 +58,19 @@ export function toast(msg) {
   setTimeout(() => t.classList.add('show'), 10);
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
 }
+
+// Long record lists show their first n rows; a button under them reveals the rest.
+// Put the returned button inside an element with class "clip".
+export function showFirst(rows, n = 5) {
+  rows.forEach((r, i) => r.classList.toggle('extra', i >= n));
+  if (rows.length <= n) return null;
+  const label = () => `Show all ${rows.length}`;
+  const btn = h('button', { type: 'button', class: 'more' }, label());
+  btn.addEventListener('click', () => {
+    const box = btn.closest('.clip');
+    const open = box.classList.toggle('open');
+    btn.textContent = open ? 'Show fewer' : label();
+    if (!open) box.scrollIntoView({ block: 'nearest' });
+  });
+  return btn;
+}

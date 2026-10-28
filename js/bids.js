@@ -29,7 +29,7 @@ export default {
       const hist = await data.cashHistory(com);
       body.replaceChildren(table(com, hist));
     };
-    root.append(prefs.commodityPicker(draw), prefs.unitPicker(draw), body);
+    root.append(body);
     draw();
   },
 };

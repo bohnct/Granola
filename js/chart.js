@@ -24,7 +24,42 @@ function step(range, target = 4) {
 // Draw at the card's real width so text stays a readable size on any screen.
 const chartWidth = () => Math.max(300, Math.min(690, (document.getElementById('view')?.clientWidth ?? 370) - 62));
 
-export function timeChart(series, { digits = 2, zero = false, empty = 'Not enough history yet.', height = 200, endLabels = false } = {}) {
+// Taller on wide screens, but never taller than a landscape phone screen can show
+// with the top and bottom bars in view.
+function chartHeight(height, W) {
+  const H = W > 500 ? height * 1.3 : height;
+  const landscape = window.innerWidth > window.innerHeight;
+  return Math.round(landscape ? Math.min(H, Math.max(150, window.innerHeight - 190)) : H);
+}
+
+// Charts on screen redraw themselves when the screen is resized or the phone is turned,
+// leaving the rest of the page (picked months, open lists, scroll position) as it is.
+const live = new Set();
+let resizeTimer = null;
+let lastSize = '';
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const size = `${window.innerWidth}x${window.innerHeight}`;
+    if (size === lastSize) return;
+    lastSize = size;
+    for (const c of live) {
+      if (!c.box.isConnected) live.delete(c);
+      else c.box.replaceChildren(c.draw());
+    }
+  }, 150);
+});
+
+export function timeChart(series, opts = {}) {
+  lastSize = `${window.innerWidth}x${window.innerHeight}`;
+  const box = h('div', { class: 'chart-box' });
+  const draw = () => drawChart(series, opts);
+  box.append(draw());
+  live.add({ box, draw });
+  return box;
+}
+
+function drawChart(series, { digits = 2, zero = false, empty = 'Not enough history yet.', height = 200, endLabels = false, extra = null } = {}) {
   series = series.map((sr) => ({ ...sr, points: sr.points.filter((p) => p.v != null && Number.isFinite(p.v)) }))
     .filter((sr) => sr.points.length);
   const all = series.flatMap((sr) => sr.points);
@@ -36,7 +71,7 @@ export function timeChart(series, { digits = 2, zero = false, empty = 'Not enoug
 
   const main = series.filter((sr) => !sr.muted);
   const labelled = endLabels && main.length <= 4;
-  const W = chartWidth(), H = height, L = 44, R = labelled ? 62 : 10, T = 10, B = 22;
+  const W = chartWidth(), H = chartHeight(height, W), L = 44, R = labelled ? 62 : 10, T = 10, B = 22;
   let min = Math.min(...all.map((p) => p.v)), max = Math.max(...all.map((p) => p.v));
   if (zero) { min = Math.min(min, 0); max = Math.max(max, 0); }
   if (min === max) { min -= 1; max += 1; }
@@ -49,12 +84,26 @@ export function timeChart(series, { digits = 2, zero = false, empty = 'Not enoug
 
   const svg = s('svg', { class: 'chart', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
     'aria-label': `${main.map((sr) => sr.name).join(', ')} chart` });
-  for (let v = min; v <= max + st / 2; v += st) {
+  for (let i = 0; min + i * st <= max + st / 2; i++) {
+    // Multiply rather than add so rounding can't turn 0 into "-0.00".
+    let v = Math.round((min + i * st) / st) * st;
+    if (Math.abs(v) < st / 1e6) v = 0;
     svg.append(s('line', { class: v === 0 && zero ? 'grid zero' : 'grid', x1: L, x2: W - R, y1: y(v), y2: y(v) }),
       s('text', { x: L - 6, y: y(v) + 3, 'text-anchor': 'end' }, num(v, tickDigits)));
   }
-  svg.append(s('text', { x: L, y: H - 6 }, shortDate(dates[0])),
-    s('text', { x: W - R, y: H - 6, 'text-anchor': 'end' }, shortDate(dates.at(-1))));
+  // Evenly spaced date labels; month + year once the chart spans most of a year.
+  const long = t1 - t0 > 300 * 864e5;
+  // Day first ("27 Jul") so a date never reads like a delivery month ("JUL'27").
+  const tickFmt = (t) => (long
+    ? new Date(t).toLocaleDateString('en-CA', { month: 'short', year: 'numeric' })
+    : new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+  const nTicks = W > 500 ? 6 : 4;
+  for (let i = 0; i < nTicks; i++) {
+    const t = t0 + ((t1 - t0) * i) / (nTicks - 1);
+    const tx = L + ((t - t0) / (t1 - t0)) * (W - L - R);
+    svg.append(s('line', { class: 'tick', x1: tx, x2: tx, y1: H - B, y2: H - B + 4 }),
+      s('text', { x: tx, y: H - 6, 'text-anchor': i === 0 ? 'start' : i === nTicks - 1 ? 'end' : 'middle' }, tickFmt(t)));
+  }
 
   const pathOf = (sr) => sr.points.map((pt, i) => {
     if (!i) return `M${x(pt.d).toFixed(1)},${y(pt.v).toFixed(1)}`;
@@ -87,17 +136,25 @@ export function timeChart(series, { digits = 2, zero = false, empty = 'Not enoug
   const readout = h('div', { class: 'readout small' });
   const show = (d) => {
     cross.setAttribute('x1', x(d)); cross.setAttribute('x2', x(d));
-    const parts = [h('b', {}, shortDate(d))];
+    const vals = {};
+    const items = [];
     main.forEach((sr, i) => {
       // Value in effect on d; a series that hasn't started or has ended shows nothing.
       const p = sr.points.filter((pt) => pt.d <= d).at(-1);
       const live = p && d <= sr.points.at(-1).d;
       dots[i].style.display = live ? '' : 'none';
-      if (live) { dots[i].setAttribute('cx', x(sr.step ? d : p.d)); dots[i].setAttribute('cy', y(p.v)); }
-      if (live || main.length <= 2) {
-        parts.push(h('span', {}, main.length > 1 ? swatch(sr) : null, main.length > 1 ? `${sr.name} ` : '', h('b', {}, live ? num(p.v, digits) : '–')));
+      if (live) {
+        dots[i].setAttribute('cx', x(sr.step ? d : p.d)); dots[i].setAttribute('cy', y(p.v));
+        vals[sr.name] = p.v;
       }
+      if (live || main.length <= 2) items.push({ sr, v: live ? p.v : null });
     });
+    // With many lines, list them top to bottom the way they sit on the chart.
+    if (main.length > 2) items.sort((a, b) => b.v - a.v);
+    const parts = [h('b', {}, shortDate(d)), ...items.map(({ sr, v }) => h('span', {},
+      main.length > 1 ? swatch(sr) : null, main.length > 1 ? `${sr.name} ` : '', h('b', {}, num(v, digits))))];
+    const more = extra?.(vals);
+    if (more) parts.push(h('span', {}, `${more[0]} `, h('b', {}, more[1])));
     readout.replaceChildren(...parts);
   };
   const onMove = (e) => {

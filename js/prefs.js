@@ -1,6 +1,6 @@
-// Choices shared by every tab (commodity, $/MT vs $/bu), remembered on this device.
+// Choices shared by every tab (crop, $/MT vs $/bu, chart range), remembered on this device.
+// The crop and unit switches live in the top bar (app.js); tabs re-render when they change.
 import { COMMODITIES } from './config.js';
-import { segmented } from './ui.js';
 import { buPerMt } from './data.js';
 
 const KEY = 'prefs';
@@ -16,9 +16,3 @@ export function set(k, v) {
 // Divide a $/MT figure by this to show the chosen unit.
 export const unitDiv = (com = prefs.com) => (prefs.unit === 'bu' ? buPerMt(com) : 1);
 export const unitLabel = () => (prefs.unit === 'bu' ? '$/bu' : '$/MT');
-
-export const commodityPicker = (onChange) => segmented(
-  COMMODITIES.map((c) => ({ value: c.key, label: c.short })), prefs.com, (v) => { set('com', v); onChange(v); });
-
-export const unitPicker = (onChange) => segmented(
-  [{ value: 'MT', label: '$ / tonne' }, { value: 'bu', label: '$ / bushel' }], prefs.unit, (v) => { set('unit', v); onChange(v); });

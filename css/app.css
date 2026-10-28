@@ -4,7 +4,9 @@
 :root {
   --bg: #f2f1ef;
   --surface: #ffffff;
-  --surface-2: #e8e7e4;
+  --surface-2: #e8e7e4;  /* buttons and switch tracks */
+  --raised: #ffffff;     /* the picked option inside a switch */
+  --head: #e8e7e4;       /* table header rows */
   --text: #1f2023;
   --muted: #66686d;
   --line: #dcdad6;
@@ -26,11 +28,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #000000;
-    --surface: #18191b;
+    --surface: #000000;
+    --raised: #3a3b3f;
+    --head: #000000;
     --surface-2: #232427;
     --text: #eceae6;
     --muted: #9a9ca0;
-    --line: #2b2c30;
+    --line: #34363a;
     --bar: #000000;
     --bar-ink: #f28c28;
     --tabbar: #000000;
@@ -46,11 +50,13 @@
 }
 :root[data-theme="dark"] {
   --bg: #000000;
-  --surface: #18191b;
+  --surface: #000000;   /* cards and charts sit on solid black */
+  --raised: #3a3b3f;
+  --head: #000000;
   --surface-2: #232427;
   --text: #eceae6;
   --muted: #9a9ca0;
-  --line: #2b2c30;
+  --line: #34363a;
   --bar: #000000;
   --bar-ink: #f28c28;
   --tabbar: #000000;
@@ -145,12 +151,12 @@ h3 { font-size: 16px; margin: 0 0 8px; }
   flex: 1; border: 0; background: transparent; color: var(--text); white-space: nowrap;
   padding: 8px 10px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 600;
 }
-.seg button.on { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.15); color: var(--brand); }
+.seg button.on { background: var(--raised); box-shadow: 0 1px 3px rgba(0,0,0,.15); color: var(--brand); }
 
 /* Tables ----------------------------------------------------------------- */
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; background: var(--surface-2); }
+th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; background: var(--head); }
 th:first-child, td:first-child { text-align: left; padding-left: 14px; }
 th:last-child, td:last-child { padding-right: 14px; }
 tr:last-child td { border-bottom: 0; }
@@ -162,7 +168,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
 /* Stats ------------------------------------------------------------------ */
 .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.stat { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
 .stat span { font-size: 12px; color: var(--muted); }
 
@@ -216,7 +222,7 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 select:focus { outline: 2px solid var(--brand); outline-offset: -1px; }
 select {
   font: inherit; font-size: 17px; color: var(--text); width: 100%;
-  background-color: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 30px 10px 12px;
+  background-color: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 30px 10px 12px;
   -webkit-appearance: none; appearance: none;
 }
 
@@ -237,10 +243,57 @@ select {
   border: 1px solid var(--line); background: var(--surface-2); color: var(--text); touch-action: manipulation; cursor: pointer;
 }
 .chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--context); }
-.chip.on { background: var(--surface); border-color: currentColor; }
+.chip.on { background: var(--raised); border-color: currentColor; }
 .chip.ended { color: var(--muted); border-style: dashed; }
 .chip.ended.on { color: var(--text); }
 .chip-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
 .linkbtn { font: inherit; font-size: 13px; font-weight: 600; color: var(--brand); background: none; border: 0; padding: 4px 0; cursor: pointer; }
 .check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); margin-left: auto; }
 .check input { width: 18px; height: 18px; accent-color: var(--brand); }
+
+/* Top-bar crop switch + unit button ------------------------------------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.crop { flex: 1; display: flex; gap: 3px; padding: 3px; margin-right: 6px; max-width: 320px; border-radius: 11px; background: rgba(255,255,255,.12); }
+.crop button {
+  flex: 1; border: 0; border-radius: 8px; padding: 8px 6px; background: transparent;
+  color: var(--bar-ink); font: inherit; font-size: 16px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+.crop button.on { background: var(--bar-ink); color: #000; }
+.unit-btn { width: auto; min-width: 48px; padding: 0 8px; font: inherit; font-size: 13px; font-weight: 800; letter-spacing: -.01em; border: 1.5px solid currentColor; height: 32px; border-radius: 9px; }
+
+/* Collapsible record tables --------------------------------------------- */
+.clip:not(.open) .extra { display: none; }
+.more { display: block; width: 100%; padding: 11px 14px; border: 0; border-top: 1px solid var(--line); background: var(--surface-2); color: var(--brand); font: inherit; font-size: 14px; font-weight: 700; text-align: center; cursor: pointer; }
+.chart .tick { stroke: var(--line); }
+.chips.showing { min-height: 32px; align-items: center; }
+.chip .x { margin-left: 2px; color: var(--muted); font-size: 15px; line-height: 1; }
+.picker { margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.picker summary { padding: 10px 12px; font-weight: 700; font-size: 14px; color: var(--brand); cursor: pointer; list-style: none; }
+.picker summary::-webkit-details-marker { display: none; }
+.picker summary::before { content: '▸'; display: inline-block; width: 16px; transition: transform .15s; }
+.picker[open] summary::before { transform: rotate(90deg); }
+.picker .group { padding: 0 12px 6px; }
+.picker .group .chips { margin: 6px 0 8px; }
+.readout i.s1 { border-color: var(--brand); }
+.readout i.s2 { border-top-style: dashed; border-color: var(--series-2); }
+
+/* Landscape iPhones: keep content clear of the notch and rounded corners on the sides. */
+.topbar { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.tabbar { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.banner { margin-left: max(16px, env(safe-area-inset-left)); margin-right: max(16px, env(safe-area-inset-right)); }
+/* Short landscape screens: slimmer bars leave more room for the chart. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --tabbar-h: 46px; }
+  .tabbar a { flex-direction: row; gap: 6px; font-size: 13px; }
+  .topbar { padding-top: calc(env(safe-area-inset-top) + 4px); padding-bottom: 4px; }
+  .crop button { padding: 6px; }
+}
+
+/* Thin separators: with everything on black, these mark where one section ends. */
+.topbar { border-bottom: 1px solid var(--line); }
+.card .chart-box { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+.card .chip-tools { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.card.tight h3.pad { border-bottom: 1px solid var(--line); }
+.picker .group + .group { border-top: 1px solid var(--line); padding-top: 8px; }
+.picker[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }

@@ -1,6 +1,8 @@
 // App startup + tab routing.
 import * as data from './data.js';
-import { timeAgo, toast } from './ui.js';
+import * as prefs from './prefs.js';
+import { COMMODITIES } from './config.js';
+import { h, timeAgo, toast } from './ui.js';
 import { getTheme, setTheme } from './theme.js';
 import bids from './bids.js';
 import history from './history.js';
@@ -24,11 +26,12 @@ function render() {
   const { name, sub } = route();
   const tab = TABS[name];
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === name));
-  document.getElementById('title').textContent = tab.title;
+  document.title = `${tab.title} · LDC Basis Tracker`;
   if (current !== name) window.scrollTo(0, 0);
   current = name;
   view.replaceChildren();
   tab.render(view, sub);
+  drawTopbar(); // after render: History may have switched the crop from its URL
 }
 
 function updateBanner() {
@@ -49,7 +52,30 @@ async function refresh() {
   }
 }
 
-const THEMES = { auto: 'Theme: follow phone', light: 'Theme: light', dark: 'Theme: dark' };
+// Top-bar crop switch and $/MT ↔ $/bu button. History carries the crop in its URL.
+const cropBar = document.getElementById('crop');
+const unitBtn = document.getElementById('unit-btn');
+function drawTopbar() {
+  cropBar.replaceChildren(...COMMODITIES.map((c) => h('button', {
+    type: 'button', class: c.key === prefs.get('com') ? 'on' : '', 'aria-selected': String(c.key === prefs.get('com')),
+    onclick: () => {
+      if (c.key === prefs.get('com')) return;
+      prefs.set('com', c.key);
+      drawTopbar();
+      if (route().name === 'history') location.hash = `#history/${c.key}`;
+      else render();
+    },
+  }, c.short)));
+  unitBtn.textContent = prefs.unitLabel();
+  unitBtn.setAttribute('aria-label', prefs.get('unit') === 'bu' ? 'Units: dollars per bushel' : 'Units: dollars per tonne');
+}
+function toggleUnit() {
+  prefs.set('unit', prefs.get('unit') === 'bu' ? 'MT' : 'bu');
+  drawTopbar();
+  render();
+}
+
+const THEMES ={ auto: 'Theme: follow phone', light: 'Theme: light', dark: 'Theme: dark' };
 function cycleTheme() {
   const order = Object.keys(THEMES);
   const next = order[(order.indexOf(getTheme()) + 1) % order.length];
@@ -62,6 +88,7 @@ function start() {
   window.addEventListener('hashchange', render);
   refreshBtn.addEventListener('click', refresh);
   document.getElementById('theme-btn').addEventListener('click', cycleTheme);
+  unitBtn.addEventListener('click', toggleUnit);
   // Refresh when the app comes back to the foreground.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 
