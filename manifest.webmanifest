@@ -1,7 +1,7 @@
 {
-  "name": "Bohn AgVentures",
-  "short_name": "Bohn Ag",
-  "description": "LDC Yorkton canola bids, futures, grain inventory, sales and calculators.",
+  "name": "LDC Basis Tracker",
+  "short_name": "LDC Basis",
+  "description": "LDC Yorkton canola and health canola (Nexera) bids, basis and futures, with saved daily history.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

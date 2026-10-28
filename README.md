@@ -1,84 +1,56 @@
-# Bohn AgVentures (Grain Desk)
+# LDC Basis Tracker
 
-An iPhone home-screen app (PWA) for grain marketing:
+A phone app (PWA) for one job: seeing how LDC Yorkton's offers for **canola** and **health canola (Nexera)** move over time. It shows the basis, the futures each bid is priced off, and the resulting cash price. LDC's website only shows today's numbers. This app keeps every day so you can look back.
 
-- **Offers**: LDC Yorkton cash bids for Canola and Nexera by delivery month ($/MT and $/bu), with daily history.
-- **Futures**: ICE canola futures from LDC's feed (10-min delay), with daily closes saved from launch day.
-- **Inventory**: production, sales targets, price targets, sold vs unsold, income, and unsold value at today's LDC bid.
-- **Sales**: record every sale (bu or MT, $/bu or $/MT, contract #, delivery month). Stored in **your Google Sheet**.
-- **Calc**: a grid of calculators: Field Work (acres/hr, time, Sask custom rates), Grain Drying (shrink), Acre Profit, Fert Blend (N-P-K-S targets to product rates and cost), and Conversions (bu↔tonnes, $/bu↔$/MT, cash = futures + basis, truck load, bin value, yield).
+- **Bids**: today's bids by delivery month. Each shows futures, basis and cash, the change since the previous saved day, and the date the basis last changed.
+- **History**: one delivery month at a time, including months LDC no longer posts. Charts cash price against futures and plots basis on its own chart, with low/high/average basis, every basis change, and the full daily record.
+- **Basis**:
+  - **All delivery months chart**: every month's basis on one timeline. Tap chips to turn months on or off (up to 8 coloured at once; the rest can show in grey). Layers switch the chart between Basis, Cash price and Futures. A month's line starts the day LDC first posts it and stops when LDC drops it.
+  - **Basis board**: basis now vs 1 week, 1 month and 3 months ago.
+  - **Health canola premium**: Nexera basis minus canola basis by month.
+  - **Recent basis changes**: both crops, newest first.
+
+$/tonne or $/bushel can be picked on every screen.
 
 ## How it fits together
 
 ```
- LDC website ──(every 15 min)──> GitHub Action ──> data/*.json in this repo
-                                                         │
- iPhone app (GitHub Pages) <── reads prices ─────────────┘
-      │
-      └── reads/writes inventory & sales ──> Google Apps Script ──> your Google Sheet
+ LDC website ──(every 15 min, weekdays)──> GitHub Action ──> data/*.json in this repo
+                                                                   │
+ Phone app (GitHub Pages) <── reads ───────────────────────────────┘
 ```
 
-- The phone can't read LDC directly (LDC's site doesn't allow other sites to load its data), so a GitHub Action fetches it on a schedule and saves it into `data/`.
-- Inventory and sales are saved on the phone first, then uploaded to the Google Sheet whenever there's a connection.
+LDC's site doesn't let other sites read its data, so a GitHub Action (`scripts/fetch_ldc.py`) fetches it on a schedule and commits it into `data/`.
 
-## File guide
+## Data files (`data/history/`)
 
-| Path | What it does |
+| File | Contents |
 |---|---|
-| `index.html`, `css/app.css` | App layout and styling |
-| `js/config.js` | **Edit to expand**: commodities, bushel weights, which crops appear in Inventory |
-| `js/offers.js`, `futures.js`, `inventory.js`, `sales.js`, `calc.js` | One file per tab |
-| `js/calc/` | One file per calculator page; `rates.js` holds the Sask custom rate guide numbers |
-| `js/theme.js` | White/Black theme choice from Settings |
-| `js/units.js`, `ledger.js` | Conversions and inventory/sales math |
-| `js/sheets.js`, `google-apps-script/Code.gs` | Google Sheet sync (app side / Google side) |
-| `js/data.js`, `chart.js` | Load price data, draw history charts |
-| `sw.js`, `manifest.webmanifest`, `icons/` | Make it installable and work offline |
-| `scripts/fetch_ldc.py` | Fetches LDC prices (run by GitHub) |
-| `.github/workflows/fetch-ldc.yml` | Schedule for the fetcher |
-| `data/` | Price data. Written only by the fetcher |
+| `cashbids-yorkton-<crop>.json` | `{delivery: [{d, basis, fut, price, sym}]}`: one row per day per delivery month (last reading of the day). `sym` (the futures contract) is recorded from Oct 27, 2026 on. |
+| `basischanges-yorkton-<crop>.json` | `[{t, label, from, to, fut}]`: every basis move, timestamped as the fetcher saw it, including several in one day. Starts Oct 27, 2026. Before that, the app works out changes from the daily rows. |
+| `futures-yorkton-<crop>.json` | `{contract: [{d, o, h, l, c}]}`: daily futures OHLC. |
 
-## Setup
+These are the same files the old Grain Desk app wrote, so all history it collected carries over unchanged.
 
-### 1. GitHub (hosting + price fetcher)
-1. Create a **public** repository on GitHub (e.g. `grain-desk`). Free GitHub Pages needs a public repo. Only LDC prices are stored there; your sales are not.
-2. Upload the contents of this `grain-pwa` folder to it.
-3. Repo **Settings → Pages**: Source = *Deploy from a branch*, Branch = `main`, folder `/ (root)`. Your app URL will be `https://<username>.github.io/<repo>/`.
-4. Repo **Settings → Actions → General → Workflow permissions**: choose *Read and write permissions*.
-5. **Actions** tab → *Fetch LDC prices* → **Run workflow** to fetch prices right away. After that it runs every 15 minutes on weekdays.
+## Replacing the old Grain Desk app on GitHub (keeps the history)
 
-### 2. Google Sheet (inventory + sales)
-1. Create a new Google Sheet (e.g. "Grain Desk").
-2. **Extensions → Apps Script**. Replace the code with `google-apps-script/Code.gs` and save.
-3. **Project Settings (⚙) → Script properties → Add**: name `TOKEN`, value = a long secret passphrase you make up.
-4. In the editor, choose the `setup` function and press **Run**. Approve the permissions. This creates the *CropYears*, *Targets* and *Sales* tabs.
-5. **Deploy → New deployment →** type *Web app*. Set *Execute as*: **Me** and *Who has access*: **Anyone**. Deploy and copy the **Web app URL**.
-   - "Anyone" means anyone with the URL can reach the script, but it refuses every request without your TOKEN.
-   - If you ever change the script: **Deploy → Manage deployments → Edit → Version: New version**. This keeps the same URL.
+The history only exists in the GitHub repo's `data/` folder. LDC doesn't publish past prices, so it can't be fetched again.
 
-### 3. iPhone
-1. Open the GitHub Pages URL in **Safari** → Share → **Add to Home Screen**.
-2. Open the app **from the home-screen icon** → ⚙ Settings → paste the Web app URL and your TOKEN → **Save & connect**.
-3. Always use the home-screen icon. Safari tabs keep separate storage.
+1. In the existing repo, **delete the old app files**: `js/` (all of it, including `js/calc/`), `css/`, `google-apps-script/`, `index.html`, `sw.js`, `manifest.webmanifest`, `scripts/make_icons.ps1`. **Do not touch `data/`.**
+2. Upload everything from this folder **except `data/`**: `index.html`, `sw.js`, `manifest.webmanifest`, `README.md`, `css/`, `js/`, `icons/`, `scripts/fetch_ldc.py`, `.github/workflows/fetch-ldc.yml`.
+3. Open the app on the phone. The new `sw.js` replaces the old cached app automatically. If the old screens still show, close and reopen it.
 
-## Notes
-- The Sheet is the master copy. You can view, sort or chart it in Google Sheets. Edits made in the Sheet show up in the app after a refresh. Keep the `id` column intact. You can add your own columns to the right; the app keeps them.
-- Futures/bid history starts the day the GitHub Action first runs (LDC doesn't publish past prices).
-- LDC prices are public web data delayed at least 10 minutes. Confirm with LDC before contracting.
-- After changing app files, bump `VERSION` in `sw.js` so phones load the new version.
-- Add another LDC elevator: add it to `FACILITIES` in `scripts/fetch_ldc.py` (its id comes from `https://www.myldc.com/api/general/facility/public?shortcut=<name>`) and to `js/config.js`.
-
-## Updating the app without losing price history
-The LDC offer, basis and futures history lives **only in the GitHub repo**, in `data/history/*.json` (plus `data/latest.json`). The GitHub Action adds to these files and commits them every 15 minutes. LDC doesn't publish past prices, so if these files are overwritten, that history can't be fetched again.
-
-The copy of `data/` on your PC is **not** kept up to date. It's whatever was there when you last uploaded.
-
-- When you upload changed app files, upload **only the files you changed**. **Never upload the `data/` folder.** Uploading it replaces the live history with your old copy.
-- To keep a backup: on GitHub, **Code → Download ZIP** now and then. Git history also keeps every past version of each file, so a bad upload can be undone by restoring the earlier version.
+To keep a backup: on GitHub, **Code → Download ZIP** now and then.
 
 ## Run locally
 ```
 python scripts/fetch_ldc.py
-python -m http.server 8765
+python -m http.server 8766
 ```
-Then open http://localhost:8765.
+Then open http://localhost:8766. The local `data/` folder is only a snapshot. The live history is on GitHub.
+
+## Notes
+- LDC prices are public web data delayed at least 10 minutes. Confirm with LDC before contracting.
+- After changing app files, bump `VERSION` in `sw.js` so phones load the new version.
+- Add another LDC elevator: add it to `FACILITIES` in `scripts/fetch_ldc.py` (its id comes from `https://www.myldc.com/api/general/facility/public?shortcut=<name>`) and set `FACILITY` in `js/config.js`.
+- The previous apps (Flask futures monitor, Grain Desk with calculators/inventory/sales) are kept in `../OLD/`.

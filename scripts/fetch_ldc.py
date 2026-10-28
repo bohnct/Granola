@@ -8,8 +8,9 @@ Uses only the Python standard library.
 
 Output:
   data/latest.json                      newest snapshot of everything
-  data/history/futures-<commodity>.json {contract: [{d,o,h,l,c}, ...]}  one row per day
-  data/history/cashbids-<commodity>.json {delivery: [{d,basis,fut,price}, ...]}
+  data/history/futures-<fac>-<commodity>.json {contract: [{d,o,h,l,c}, ...]}  one row per day
+  data/history/cashbids-<fac>-<commodity>.json {delivery: [{d,basis,fut,price,sym}, ...]}  one row per day
+  data/history/basischanges-<fac>-<commodity>.json [{t,label,from,to,fut}, ...]  every intraday basis move
 """
 from __future__ import annotations
 
@@ -148,16 +149,27 @@ def update_history(fac_key: str, snap: dict) -> list[str]:
         if write_if_changed(path, hist):
             changed.append(path.name)
 
+    now = datetime.now(timezone.utc).isoformat(timespec="minutes")
     today = datetime.now(LOCAL_TZ).date().isoformat()
     for com, rows in snap["cashBids"].items():
         path = HIST / f"cashbids-{fac_key}-{com}.json"
+        log_path = HIST / f"basischanges-{fac_key}-{com}.json"
         hist = read_json(path, {})
+        log = read_json(log_path, [])
         for r in rows:
-            hist[r["label"]] = upsert_day(hist.get(r["label"], []), {
+            series = hist.get(r["label"], [])
+            # The daily row is overwritten all day, so log every basis move as it happens.
+            prev = series[-1].get("basis") if series else None
+            if prev is not None and r["basis"] is not None and r["basis"] != prev:
+                log.append({"t": now, "label": r["label"], "from": prev, "to": r["basis"], "fut": r["futures"]})
+            hist[r["label"]] = upsert_day(series, {
                 "d": today, "basis": r["basis"], "fut": r["futures"], "price": r["price"],
+                "sym": r["futuresSymbol"],
             })
         if write_if_changed(path, hist):
             changed.append(path.name)
+        if write_if_changed(log_path, log):
+            changed.append(log_path.name)
     return changed
 
 
