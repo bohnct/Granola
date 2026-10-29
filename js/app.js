@@ -5,33 +5,43 @@ import { COMMODITIES } from './config.js';
 import { h, timeAgo, toast } from './ui.js';
 import { getTheme, setTheme } from './theme.js';
 import bids from './bids.js';
-import history from './history.js';
 import basis from './basis.js';
 
-const TABS = { bids, history, basis };
+const TABS = { bids, basis };
 const view = document.getElementById('view');
 const banner = document.getElementById('banner');
 const refreshBtn = document.getElementById('refresh');
 let current = null;
 
-// Hash is "#tab" or "#tab/rest" (e.g. "#history/canola/DEC'26").
+// Hash is "#tab" or "#tab/rest" (e.g. "#basis/canola/DEC'26").
 function route() {
   const hash = location.hash.slice(1);
   const i = hash.indexOf('/');
-  const name = i < 0 ? hash : hash.slice(0, i);
+  let name = i < 0 ? hash : hash.slice(0, i);
+  if (name === 'history') name = 'basis'; // the old History tab's links (bookmarks, home-screen shortcuts)
   return TABS[name] ? { name, sub: i < 0 ? '' : hash.slice(i + 1) } : { name: 'bids', sub: '' };
 }
 
-function render() {
+// keep: redraw in place (unit switch, fresh prices) at the same scroll position, instead of
+// starting the page over.
+async function render(keep = false) {
   const { name, sub } = route();
   const tab = TABS[name];
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === name));
   document.title = `${tab.title} · LDC Basis Tracker`;
   if (current !== name) window.scrollTo(0, 0);
   current = name;
+  const y = window.scrollY;
+  // Hold the page's height while the tab reloads its data, so the scroll position survives.
+  if (keep) view.style.minHeight = `${view.offsetHeight}px`;
   view.replaceChildren();
-  tab.render(view, sub);
-  drawTopbar(); // after render: History may have switched the crop from its URL
+  const done = tab.render(view, sub, { keep });
+  drawTopbar(); // after render: a #basis/<crop>/<month> link may have switched the crop
+  if (keep) {
+    await done;
+    view.style.minHeight = '';
+    window.scrollTo(0, y);
+  }
 }
 
 function updateBanner() {
@@ -62,7 +72,9 @@ function drawTopbar() {
       if (c.key === prefs.get('com')) return;
       prefs.set('com', c.key);
       drawTopbar();
-      if (route().name === 'history') location.hash = `#history/${c.key}`;
+      // A link naming the crop would switch it back, so swap the link instead.
+      const { name, sub } = route();
+      if (sub) location.hash = `#${name}/${c.key}`;
       else render();
     },
   }, c.short)));
@@ -72,7 +84,7 @@ function drawTopbar() {
 function toggleUnit() {
   prefs.set('unit', prefs.get('unit') === 'bu' ? 'MT' : 'bu');
   drawTopbar();
-  render();
+  render(true);
 }
 
 const THEMES ={ auto: 'Theme: follow phone', light: 'Theme: light', dark: 'Theme: dark' };
@@ -84,8 +96,8 @@ function cycleTheme() {
 }
 
 function start() {
-  data.onData(render);
-  window.addEventListener('hashchange', render);
+  data.onData(() => render(true));
+  window.addEventListener('hashchange', () => render());
   refreshBtn.addEventListener('click', refresh);
   document.getElementById('theme-btn').addEventListener('click', cycleTheme);
   unitBtn.addEventListener('click', toggleUnit);

@@ -21,19 +21,37 @@ const facility = () => latest?.facilities?.[FACILITY.key] ?? null;
 export const cashBids = (com) => facility()?.cashBids?.[com] ?? [];
 export const buPerMt = (com) => cashBids(com)[0]?.buPerUnit ?? BU_PER_MT;
 
-function file(name, fallback) {
+// Fetch a history file; null when it isn't there.
+function file(name) {
   if (!fileCache.has(name)) {
     fileCache.set(name, fetch(`data/history/${name}.json?t=${latest?.updatedAt ?? ''}`)
-      .then((r) => (r.ok ? r.json() : fallback))
-      .catch(() => fallback));
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null));
   }
   return fileCache.get(name);
 }
 
-// {label: [{d, basis, fut, price, sym?}, ...]} one row per day, oldest first.
-export const cashHistory = (com) => file(`cashbids-${FACILITY.key}-${com}`, {});
+// A day as stored: {d, sym, f, b: [o,h,l,c], p: [o,h,l,c]} (basis and cash for the day).
+// Screens use the close as basis/price; b and p carry the day's range for the bar charts.
+const day = (r) => ({ d: r.d, sym: r.sym ?? null, fut: r.f, basis: r.b?.[3], price: r.p?.[3], b: r.b, p: r.p });
+// Files from before Oct 29, 2026 had one reading a day; the Action converts them on its next run.
+const oldDay = (r) => ({ ...r, sym: r.sym ?? null, b: [r.basis, r.basis, r.basis, r.basis], p: [r.price, r.price, r.price, r.price] });
+
+const store = async (com) => {
+  const cur = await file(`${FACILITY.key}-${com}`);
+  if (cur) return cur;
+  const [bids, changes] = await Promise.all([file(`cashbids-${FACILITY.key}-${com}`), file(`basischanges-${FACILITY.key}-${com}`)]);
+  return { bids: bids ?? {}, changes: changes ?? [], old: true };
+};
+
+// {label: [{d, basis, fut, price, sym, b, p}, ...]} one row per day, oldest first.
+export const cashHistory = (com) => store(com).then((s) => Object.fromEntries(
+  Object.entries(s.bids ?? {}).map(([label, rows]) => [label, rows.map(s.old ? oldDay : day)])));
 // [{t, label, from, to, fut}] every basis move seen during the day, oldest first.
-export const basisChanges = (com) => file(`basischanges-${FACILITY.key}-${com}`, []);
+export const basisChanges = (com) => store(com).then((s) => s.changes ?? []);
+// {contract: [{d, o, h, l, c}]} exchange daily bars for canola futures (both crops price off them).
+export const futuresHistory = async () => (await file(`${FACILITY.key}-futures`))
+  ?? (await file(`futures-${FACILITY.key}-canola`)) ?? {};
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 

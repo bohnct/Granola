@@ -111,7 +111,7 @@ body {
 /* Tab bar ---------------------------------------------------------------- */
 .tabbar {
   position: fixed; inset: auto 0 0 0; z-index: 5;
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--tabbar); border-top: 1px solid var(--line);
@@ -205,8 +205,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 18px; height: 0; border-top: 2px solid var(--brand); }
 .legend i.s2 { border-top: 2px dashed var(--series-2); }
-.readout { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: flex-end; color: var(--muted); font-variant-numeric: tabular-nums; }
-.readout b { color: var(--text); }
 
 /* Tables with a heading inside a tight card */
 .card.tight h3.pad { margin: 0; padding: 12px 14px 10px; }
@@ -235,7 +233,6 @@ select {
 :root[data-theme="dark"] { --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767; --context: #3a3b3f; }
 .chart .line.muted { stroke: var(--context); stroke-width: 1.5; }
 .chart .end-label { fill: var(--text); font-size: 10px; font-weight: 600; }
-.readout i { display: inline-block; width: 12px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 4px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -274,8 +271,6 @@ select {
 .picker[open] summary::before { transform: rotate(90deg); }
 .picker .group { padding: 0 12px 6px; }
 .picker .group .chips { margin: 6px 0 8px; }
-.readout i.s1 { border-color: var(--brand); }
-.readout i.s2 { border-top-style: dashed; border-color: var(--series-2); }
 
 /* Landscape iPhones: keep content clear of the notch and rounded corners on the sides. */
 .topbar { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
@@ -297,3 +292,87 @@ main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16
 .card.tight h3.pad { border-bottom: 1px solid var(--line); }
 .picker .group + .group { border-top: 1px solid var(--line); padding-top: 8px; }
 .picker[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+
+/* Daily OHLC bars (History tab, Bars) ------------------------------------- */
+.chart .bars { fill: none; stroke-width: 1.5; stroke-linecap: butt; }
+.chart .bars.s1 { stroke: var(--brand); }
+
+/* Bids table: compact so all posted months fit one phone screen. */
+table.bids td { padding-top: 6px; padding-bottom: 6px; line-height: 1.25; }
+table.bids th { padding-top: 8px; padding-bottom: 8px; }
+table.bids .since { color: var(--muted); }
+
+/* Month detail on the Basis tab: land below the sticky top bar when a row opens it. */
+.month { display: block; scroll-margin-top: 64px; }
+
+/* Values box: shows over the chart only while it's touched or hovered. */
+.plot { position: relative; }
+.tip {
+  position: absolute; top: 6px; z-index: 1; pointer-events: none;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 8px; font-size: 12px; line-height: 1.45; color: var(--muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.tip[hidden] { display: none; }
+.tip b { color: var(--text); }
+.tip .tip-date { color: var(--text); font-weight: 700; }
+.tip small { font-size: 11px; }
+.tip i { display: inline-block; width: 12px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 4px; }
+.tip i.s1 { border-color: var(--brand); }
+.tip i.s2 { border-top-style: dashed; border-color: var(--series-2); }
+.tip .ohlc { display: flex; gap: 8px; }
+/* Day range behind a line (Lines + "Daily range"). */
+.chart .band { stroke: none; opacity: .18; }
+.chart .band.s1 { fill: var(--brand); }
+.chart .band.s2 { fill: var(--series-2); }
+
+/* Landscape phones: use the full width. */
+@media (orientation: landscape) and (max-height: 500px) {
+  main { max-width: none; }
+}
+.check[hidden] { display: none; }
+.chips.compact { gap: 5px; }
+.chips.compact .chip { padding: 4px 9px; font-size: 12px; }
+.chips.months { margin: 10px 0 4px; }
+
+/* Chart titles open a settings sheet. */
+.chart-title {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  margin: 0 0 8px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer;
+  font: inherit; font-size: 16px; font-weight: 700; color: var(--text); touch-action: manipulation;
+}
+.chart-title small { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.chart-head .gear { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--surface-2); color: var(--brand); }
+.chart-head .gear svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.chart-head .gear circle { fill: var(--surface-2); }
+.sheet {
+  margin: auto auto 0; width: 100%; max-width: 560px; max-height: 85vh; padding: 0; border: 0;
+  border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; background: var(--raised); color: var(--text);
+}
+.sheet::backdrop { background: rgba(0,0,0,.55); }
+.sheet-inner { padding: 6px 16px calc(16px + env(safe-area-inset-bottom)); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); margin-bottom: 6px; font-size: 16px; }
+.sheet-head .linkbtn { font-size: 15px; }
+.sheet-row { display: block; padding: 8px 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.sheet-row .seg { margin: 6px 0 0; }
+.sheet-check { display: flex; justify-content: space-between; align-items: center; color: var(--text); font-size: 15px; }
+.sheet-check input { width: 22px; height: 22px; accent-color: var(--brand); }
+.sheet-action { display: block; padding: 10px 0; font-size: 15px; }
+@media (orientation: landscape) and (max-height: 500px) { .sheet { max-height: 92vh; } }
+
+/* Title row: settings (the title) and full screen. */
+.chart-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.chart-head .chart-title { flex: 1; min-width: 0; margin: 0; }
+.focus-btn { flex: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+
+/* Full-screen chart: covers the app; the page behind can't scroll. */
+html.focused, html.focused body { overflow: hidden; }
+.focus {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  background: var(--surface); color: var(--text); touch-action: none; overscroll-behavior: contain;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.focus-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 4px 16px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.focus-close { font-size: 28px; line-height: 1; color: var(--text); }
+.focus-body { flex: 1; min-height: 0; padding: 8px 12px 10px; overflow: hidden; }
+.focus .chart { touch-action: none; }

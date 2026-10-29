@@ -74,3 +74,43 @@ export function showFirst(rows, n = 5) {
   });
   return btn;
 }
+
+// A chart card's title row. Tapping the title opens its settings; `note` is a short summary of
+// what's set. onFocus adds a button that opens the chart full screen.
+export function chartTitle(text, onOpen, note = null, onFocus = null) {
+  return h('div', { class: 'chart-head' },
+    h('button', { type: 'button', class: 'chart-title', onclick: onOpen, 'aria-haspopup': 'dialog' },
+      h('span', {}, text, note ? h('small', {}, note) : null),
+      h('i', { class: 'gear', 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>' })),
+    onFocus ? h('button', { type: 'button', class: 'gear focus-btn', onclick: onFocus, 'aria-label': `${text} full screen`,
+      html: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>' }) : null);
+}
+
+// Bottom sheet of chart settings. fields() lists the rows and is called again after every
+// change, so options can depend on each other. Each change applies to the chart right away.
+//   {type: 'seg', label, options, value, set}  {type: 'check', label, value, set}  {type: 'action', label, run}
+export function openSettings(title, fields) {
+  const body = h('div', { class: 'sheet-body' });
+  const row = (f) => {
+    if (f.type === 'seg') {
+      return h('div', { class: 'sheet-row' }, h('span', {}, f.label), segmented(f.options, f.value, (v) => { f.set(v); draw(); }));
+    }
+    if (f.type === 'check') {
+      return h('label', { class: 'sheet-row sheet-check' }, h('span', {}, f.label),
+        h('input', { type: 'checkbox', checked: !!f.value, onchange: (e) => { f.set(e.target.checked); draw(); } }));
+    }
+    return h('button', { type: 'button', class: 'linkbtn sheet-action', onclick: () => { f.run(); draw(); } }, f.label);
+  };
+  const draw = () => body.replaceChildren(...fields().filter(Boolean).map(row));
+  const dlg = h('dialog', { class: 'sheet', 'aria-label': `${title} settings` },
+    h('div', { class: 'sheet-inner' },
+      h('div', { class: 'sheet-head' }, h('b', {}, title),
+        h('button', { type: 'button', class: 'linkbtn', onclick: () => dlg.close() }, 'Done')),
+      body));
+  // A tap outside the sheet (on the dimmed page) closes it.
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('close', () => dlg.remove());
+  draw();
+  document.body.append(dlg);
+  dlg.showModal();
+}

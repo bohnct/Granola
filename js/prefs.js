@@ -4,7 +4,7 @@ import { COMMODITIES } from './config.js';
 import { buPerMt } from './data.js';
 
 const KEY = 'prefs';
-const prefs = { com: COMMODITIES[0].key, unit: 'MT', range: '3M', layer: 'basis', others: true };
+const prefs = { com: COMMODITIES[0].key, unit: 'MT', range: '3M', layer: 'basis', others: true, style: 'line' };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { /* defaults */ }
 
 export const get = (k) => prefs[k];

@@ -1,12 +1,12 @@
 // "All delivery months" chart: every delivery period LDC has ever posted on one time axis.
 // A month's line starts the day LDC first posts it and stops when LDC drops it, so months
 // coming and going need no special handling. Up to 8 picked months are coloured; the rest
-// can show as grey context. The picker groups old months by delivery year so it stays
-// short after a year or more of history.
+// can show as grey context. One row of month chips under the chart is both the legend and
+// the picker; months LDC no longer posts fold away by delivery year.
 import * as data from './data.js';
 import * as prefs from './prefs.js';
-import { h, segmented, toast } from './ui.js';
-import { timeChart } from './chart.js';
+import { h, toast, chartTitle, openSettings } from './ui.js';
+import { timeChart, focusChart } from './chart.js';
 import { RANGES, rangeStart } from './ranges.js';
 
 const COLORS = 8; // --c1..--c8 in app.css; more than this at once can't be told apart
@@ -15,7 +15,7 @@ const LAYERS = [
   { value: 'price', label: 'Cash price', field: 'price' },
   { value: 'fut', label: 'Futures', field: 'fut' },
 ];
-let pickerOpen = false; // kept across redraws while the app is open
+let olderOpen = false; // kept across redraws while the app is open
 
 // Picked months keep their colour slot while picked: [{label, slot}].
 const pickedKey = (com) => `picked-${com}`;
@@ -46,7 +46,6 @@ export function monthsChart(com, hist) {
       if (!slot) return toast(`Up to ${COLORS} months at a time. Turn one off first.`);
       return save([...picked, { label, slot }]);
     };
-    const pickSet = (labels) => save(labels.slice(0, COLORS).map((label, i) => ({ label, slot: i + 1 })));
 
     const inRange = (x) => x.rows.some((r) => r.d >= from);
     const showOthers = prefs.get('others') !== false;
@@ -58,16 +57,14 @@ export function monthsChart(com, hist) {
       points: x.rows.filter((r) => r.d >= from).map((r) => ({ d: r.d, v: r[layer.field] / div })),
     })).filter((sr) => !sr.muted || showOthers);
 
-    const chip = (x, { remove = false } = {}) => {
+    const chip = (x) => {
       const on = slotOf.has(x.label);
       return h('button', {
         type: 'button', class: `chip${on ? ' on' : ''}${x.bid ? '' : ' ended'}`, 'aria-pressed': String(on),
         title: x.bid ? 'Posted now' : 'No longer posted', onclick: () => toggle(x.label),
-      }, h('i', { style: on ? `background:var(--c${slotOf.get(x.label)})` : null }), x.label, remove ? h('span', { class: 'x', 'aria-hidden': 'true' }, '×') : null);
+      }, h('i', { style: on ? `background:var(--c${slotOf.get(x.label)})` : null }), x.label);
     };
 
-    // The legend: only what's picked, in delivery order.
-    const shown = list.filter((x) => slotOf.has(x.label));
     const live = list.filter((x) => x.bid);
     // Months no longer posted, newest delivery year first.
     const byYear = new Map();
@@ -76,31 +73,30 @@ export function monthsChart(com, hist) {
       byYear.set(yr, [...(byYear.get(yr) ?? []), x]);
     });
 
-    const picker = h('details', { class: 'picker', open: pickerOpen, ontoggle: (e) => { pickerOpen = e.target.open; } },
-      h('summary', {}, `Pick months · ${list.length} saved`),
-      h('div', { class: 'group' }, h('span', { class: 'small muted' }, `Posted now (${live.length})`), h('div', { class: 'chips' }, live.map((x) => chip(x)))),
+    const older = byYear.size ? h('details', { class: 'picker', open: olderOpen, ontoggle: (e) => { olderOpen = e.target.open; } },
+      h('summary', {}, `No longer posted (${list.length - live.length})`),
       [...byYear].map(([yr, xs]) => h('div', { class: 'group' },
-        h('span', { class: 'small muted' }, `${yr} deliveries · no longer posted (${xs.length})`),
-        h('div', { class: 'chips' }, xs.map((x) => chip(x))))));
+        h('span', { class: 'small muted' }, `${yr} deliveries`),
+        h('div', { class: 'chips compact' }, xs.map(chip))))) : null;
 
+    // Tap the title for this chart's settings; they apply as they're changed.
+    const settings = () => openSettings('All delivery months', () => [
+      { type: 'seg', label: 'Show', options: LAYERS, value: prefs.get('layer') ?? 'basis', set: (v) => { prefs.set('layer', v); draw(); } },
+      { type: 'seg', label: 'Date range', options: RANGES, value: prefs.get('range'), set: (v) => { prefs.set('range', v); draw(); } },
+      { type: 'check', label: 'Months not picked in grey', value: prefs.get('others') !== false, set: (v) => { prefs.set('others', v); draw(); } },
+      { type: 'action', label: 'Clear picked months', run: () => save([]) },
+    ]);
+    const note = [RANGES.find((r) => r.value === prefs.get('range'))?.label, `${picked.length} picked`, showOthers ? 'others in grey' : null]
+      .filter(Boolean).join(' · ');
+
+    const title = `All delivery months · ${layer.label} (${prefs.unitLabel()})`;
+    const opts = { zero: layer.zero, height: 260, endLabels: true, empty: 'The chart needs two saved days in this range.' };
     card.replaceChildren(
-      h('h3', {}, `All delivery months · ${layer.label} (${prefs.unitLabel()})`),
-      segmented(LAYERS, layer.value, (v) => { prefs.set('layer', v); draw(); }),
-      segmented(RANGES, prefs.get('range'), (v) => { prefs.set('range', v); draw(); }),
-      h('div', { class: 'chips showing' },
-        shown.length ? shown.map((x) => chip(x, { remove: true })) : h('span', { class: 'small muted' }, 'No months picked. Use "Pick months" below.')),
-      timeChart(series, { zero: layer.zero, height: 260, endLabels: true, empty: 'The chart needs two saved days in this range.' }),
-      h('div', { class: 'chip-tools' },
-        h('button', { type: 'button', class: 'linkbtn', onclick: () => pickSet(live.slice(0, 3).map((x) => x.label)) }, 'Next 3'),
-        h('button', { type: 'button', class: 'linkbtn', onclick: () => pickSet(live.map((x) => x.label)) }, `All posted${live.length > COLORS ? ` (first ${COLORS})` : ''}`),
-        h('button', { type: 'button', class: 'linkbtn', onclick: () => save([]) }, 'Clear'),
-        h('label', { class: 'check' },
-          h('input', { type: 'checkbox', checked: showOthers, onchange: (e) => { prefs.set('others', e.target.checked); draw(); } }),
-          'Others in grey')),
-      picker,
-      h('p', { class: 'small muted', style: 'margin:8px 0 0' },
-        'Each line is one delivery month, from the day LDC first posts it until LDC stops posting it. ',
-        `Up to ${COLORS} can be coloured at once. Tap a coloured month to remove it. Drag across the chart to read values.`));
+      chartTitle(title, settings, note, () => focusChart(title, series, opts)),
+      timeChart(series, opts),
+      // Tap a month to colour it or turn it off.
+      h('div', { class: 'chips compact months' }, live.map(chip)),
+      older ?? '');
   };
   draw();
   return card;
