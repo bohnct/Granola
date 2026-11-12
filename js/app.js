@@ -6,8 +6,9 @@ import { h, timeAgo, toast } from './ui.js';
 import { getTheme, setTheme } from './theme.js';
 import bids from './bids.js';
 import basis from './basis.js';
+import debug from './debug.js';
 
-const TABS = { bids, basis };
+const TABS = { bids, basis, debug };
 const view = document.getElementById('view');
 const banner = document.getElementById('banner');
 const refreshBtn = document.getElementById('refresh');
@@ -28,7 +29,8 @@ async function render(keep = false) {
   const { name, sub } = route();
   const tab = TABS[name];
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === name));
-  document.title = `${tab.title} · LDC Basis Tracker`;
+  document.getElementById('debug-btn').classList.toggle('on', name === 'debug');
+  document.title = `${tab.title} · LDC Bids`;
   if (current !== name) window.scrollTo(0, 0);
   current = name;
   const y = window.scrollY;

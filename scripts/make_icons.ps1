@@ -1,59 +1,49 @@
-# Draws the Bohn AgVentures app icons: a white canola flower on solid black.
+# Draws the LDC Bids app icons: "LDC" in white over "Bids" in orange, bold, on solid black.
 # Windows only (uses the built-in System.Drawing).
 # Run:  powershell -ExecutionPolicy Bypass -File scripts\make_icons.ps1
 Add-Type -AssemblyName System.Drawing
 
 $out = Join-Path $PSScriptRoot '..\icons'
-$black = [System.Drawing.Color]::Black
-$white = [System.Drawing.Color]::White
-
-# One petal pointing straight up from the centre, on a 180px grid centred at (90, 90).
-# Narrow at the base, wide and rounded at the tip with a soft notch, like a canola petal.
-function Petal-Path {
-  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $pts = [System.Drawing.PointF[]]@(
-    (New-Object System.Drawing.PointF 90, 86),
-    (New-Object System.Drawing.PointF 82, 76), (New-Object System.Drawing.PointF 63, 54), (New-Object System.Drawing.PointF 64, 34),
-    (New-Object System.Drawing.PointF 65, 17), (New-Object System.Drawing.PointF 82, 12), (New-Object System.Drawing.PointF 90, 17),
-    (New-Object System.Drawing.PointF 98, 12), (New-Object System.Drawing.PointF 115, 17), (New-Object System.Drawing.PointF 116, 34),
-    (New-Object System.Drawing.PointF 117, 54), (New-Object System.Drawing.PointF 98, 76), (New-Object System.Drawing.PointF 90, 86)
-  )
-  $p.AddBeziers($pts)
-  $p.CloseFigure()
-  return $p
-}
+$lines = @(
+  @{ text = 'LDC';  color = [System.Drawing.Color]::White },
+  @{ text = 'Bids'; color = [System.Drawing.ColorTranslator]::FromHtml('#FF7A00') }
+)
+$family = New-Object System.Drawing.FontFamily 'Segoe UI'
+$style = [System.Drawing.FontStyle]::Bold
+$maxWidth = 0.66   # widest line, as a share of the icon (stays inside the round mask on Android)
+$gap = 0.06        # space between the lines, as a share of the icon
 
 function Draw-Icon([int]$size) {
-  $k = $size / 180.0
   $bmp = New-Object System.Drawing.Bitmap $size, $size
   $g = [System.Drawing.Graphics]::FromImage($bmp)
   $g.SmoothingMode = 'AntiAlias'
   $g.PixelOffsetMode = 'HighQuality'
-  $g.Clear($black)
-  $g.ScaleTransform($k, $k)
+  $g.Clear([System.Drawing.Color]::Black)
 
-  $whiteBrush = New-Object System.Drawing.SolidBrush $white
-  $blackBrush = New-Object System.Drawing.SolidBrush $black
-  $vein = New-Object System.Drawing.Pen $black, 1.4
-  $vein.StartCap = 'Round'; $vein.EndCap = 'Round'
-
-  # Four petals in an X, the way canola flowers sit.
-  foreach ($angle in 45, 135, 225, 315) {
-    $petal = Petal-Path
-    $m = New-Object System.Drawing.Drawing2D.Matrix
-    $m.RotateAt($angle, (New-Object System.Drawing.PointF 90, 90))
-    $petal.Transform($m)
-    $g.FillPath($whiteBrush, $petal)
-
-    # Centre vein, drawn in black so it reads as a fine groove.
-    $veinPath = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $veinPath.AddLine(90, 66, 90, 40)
-    $veinPath.Transform($m)
-    $g.DrawPath($vein, $veinPath)
+  # Lay each line out at a trial size, then scale both together so the wider one fits.
+  $fmt = [System.Drawing.StringFormat]::GenericTypographic
+  $paths = foreach ($l in $lines) {
+    $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $p.AddString($l.text, $family, [int]$style, 100, (New-Object System.Drawing.PointF 0, 0), $fmt)
+    $p
   }
+  $widest = ($paths | ForEach-Object { $_.GetBounds().Width } | Measure-Object -Maximum).Maximum
+  $k = ($size * $maxWidth) / $widest
+  $heights = $paths | ForEach-Object { $_.GetBounds().Height * $k }
+  $total = ($heights | Measure-Object -Sum).Sum + $gap * $size
+  $y = ($size - $total) / 2
 
-  # Centre: a plain round opening where the petals meet.
-  $g.FillEllipse($blackBrush, 79, 79, 22, 22)
+  for ($i = 0; $i -lt $paths.Count; $i++) {
+    $p = $paths[$i]; $b = $p.GetBounds()
+    $m = New-Object System.Drawing.Drawing2D.Matrix
+    # Centre each line by its actual ink, not the font's box.
+    $m.Translate(($size - $b.Width * $k) / 2, $y)
+    $m.Scale($k, $k)
+    $m.Translate(-$b.X, -$b.Y)
+    $p.Transform($m)
+    $g.FillPath((New-Object System.Drawing.SolidBrush $lines[$i].color), $p)
+    $y += $heights[$i] + $gap * $size
+  }
 
   $path = Join-Path $out "icon-$size.png"
   $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)

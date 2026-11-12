@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>LDC Basis Tracker</title>
+  <title>LDC Bids</title>
   <meta name="theme-color" content="#000000">
   <script>
     // Apply the saved theme before first paint (see js/theme.js).
@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="LDC Basis">
+  <meta name="apple-mobile-web-app-title" content="LDC Bids">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
@@ -20,12 +20,15 @@
 </head>
 <body>
   <header class="topbar">
-    <h1 class="sr-only" id="title">LDC Basis Tracker</h1>
+    <h1 class="sr-only" id="title">LDC Bids</h1>
     <div id="crop" class="crop" role="tablist" aria-label="Crop"></div>
     <button id="unit-btn" class="icon-btn unit-btn" type="button" aria-label="Units: dollars per tonne">$/MT</button>
     <button id="theme-btn" class="icon-btn" type="button" aria-label="Theme">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
     </button>
+    <a id="debug-btn" class="icon-btn" href="#debug" aria-label="Fetch debug">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>
+    </a>
     <button id="refresh" class="icon-btn" type="button" aria-label="Refresh">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" /></svg>
     </button>

@@ -1,12 +1,12 @@
 // Service worker: app files cache-first (offline), price data network-first.
 // Bump VERSION whenever app files change so phones pick up the new version.
-const VERSION = 'basis-v11';
+const VERSION = 'basis-v14';
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = 'data';
 const APP_FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/config.js', 'js/ui.js', 'js/theme.js', 'js/data.js', 'js/prefs.js', 'js/chart.js',
-  'js/bids.js', 'js/month.js', 'js/basis.js', 'js/monthschart.js', 'js/ranges.js',
+  'js/bids.js', 'js/month.js', 'js/basis.js', 'js/monthschart.js', 'js/ranges.js', 'js/debug.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

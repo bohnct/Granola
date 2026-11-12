@@ -1,6 +1,6 @@
 {
-  "name": "LDC Basis Tracker",
-  "short_name": "LDC Basis",
+  "name": "LDC Bids",
+  "short_name": "LDC Bids",
   "description": "LDC Yorkton canola and health canola (Nexera) bids, basis and futures, with saved daily history.",
   "start_url": "./",
   "scope": "./",

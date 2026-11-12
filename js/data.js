@@ -53,6 +53,11 @@ export const basisChanges = (com) => store(com).then((s) => s.changes ?? []);
 export const futuresHistory = async () => (await file(`${FACILITY.key}-futures`))
   ?? (await file(`futures-${FACILITY.key}-canola`)) ?? {};
 
+// {"YYYY-MM-DD": [{t: "HH:MM", s: "new"|"same"|"error", e?}]} every fetch run, Saskatchewan time.
+// Always fetched fresh: quiet runs add to it without changing latest.json.
+export const fetchLog = () => fetch(`data/fetchlog.json?t=${Date.now()}`, { cache: 'no-store' })
+  .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 // LDC labels look like "DEC'26", "JUNE'27", "SEPT 27". Returns "2027-06" or null.

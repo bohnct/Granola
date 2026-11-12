@@ -30,6 +30,7 @@ export function monthsChart(com, hist) {
   const list = data.deliveries(com, hist);
   const card = h('div', { class: 'card' });
   if (!list.length) return card;
+  let current = null; // {title, series, opts} as last drawn, for the full-screen view
 
   const draw = () => {
     const div = prefs.unitDiv(com);
@@ -91,8 +92,9 @@ export function monthsChart(com, hist) {
 
     const title = `All delivery months · ${layer.label} (${prefs.unitLabel()})`;
     const opts = { zero: layer.zero, height: 260, endLabels: true, empty: 'The chart needs two saved days in this range.' };
+    current = { title, series, opts };
     card.replaceChildren(
-      chartTitle(title, settings, note, () => focusChart(title, series, opts)),
+      chartTitle(title, settings, note, () => focusChart(() => current, settings)),
       timeChart(series, opts),
       // Tap a month to colour it or turn it off.
       h('div', { class: 'chips compact months' }, live.map(chip)),

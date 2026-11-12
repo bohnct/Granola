@@ -14,6 +14,8 @@ Output:
       row = {"d", "sym", "f", "b": [o,h,l,c], "p": [o,h,l,c]}  one per day: futures at the last
       reading, and the day's open/high/low/close of the basis and the cash price
   data/history/<fac>-futures.json        {contract: [{d,o,h,l,c}, ...]}  exchange daily OHLC
+  data/fetchlog.json                     {"YYYY-MM-DD": [{"t": "HH:MM", "s": "new"|"same"|"error", "e"?}]}
+      one entry per fetch run (Saskatchewan time), for the app's debug page
 """
 from __future__ import annotations
 
@@ -43,6 +45,7 @@ MONTH_CODES = {"Jan": "F", "Feb": "G", "Mar": "H", "Apr": "J", "May": "K", "Jun"
                "Jul": "N", "Aug": "Q", "Sep": "U", "Oct": "V", "Nov": "X", "Dec": "Z"}
 FUTURES_ROOTS = {"canola": "RS"}
 HISTORY_KEEP_DAYS = 3650
+FETCHLOG_KEEP_DAYS = 60
 
 # --loop: fetch every 15 minutes Mon-Fri from 6:30 to 15:30 Saskatchewan time.
 # GitHub stops a job after 6 hours, so a loop hands over to the next scheduled run before that.
@@ -272,6 +275,18 @@ def update_history(fac_key: str, snap: dict) -> list[str]:
     return changed
 
 
+def log_fetch(status: str, errors: list[str]) -> None:
+    """Record this run in data/fetchlog.json: new = prices changed, same = nothing new, error = a fetch failed."""
+    now = datetime.now(LOCAL_TZ)
+    path = DATA / "fetchlog.json"
+    log = read_json(path, {})
+    entry = {"t": now.strftime("%H:%M"), "s": status}
+    if errors:
+        entry["e"] = "; ".join(errors)[:300]
+    log.setdefault(now.date().isoformat(), []).append(entry)
+    write_history(path, dict(sorted(log.items())[-FETCHLOG_KEEP_DAYS:]))
+
+
 def run_once() -> int:
     migrated = []
     for fac in FACILITIES:
@@ -291,6 +306,7 @@ def run_once() -> int:
 
     if not facilities:
         print("No data fetched:", *errors, sep="\n  ")
+        log_fetch("error", errors)
         return 1
 
     # Only bump the timestamp when prices actually changed, so quiet runs
@@ -308,6 +324,8 @@ def run_once() -> int:
     if changed_prices and not errors:
         for key, snap in facilities.items():
             hist_changed += update_history(key, snap)
+
+    log_fetch("error" if errors else "new" if changed_prices else "same", errors)
 
     stamp = datetime.now(LOCAL_TZ).strftime("%H:%M")
     print(f"{stamp} latest.json {'updated' if wrote else 'unchanged'}; history: {', '.join(hist_changed) or 'unchanged'}"

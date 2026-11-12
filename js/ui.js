@@ -81,13 +81,16 @@ export function chartTitle(text, onOpen, note = null, onFocus = null) {
   return h('div', { class: 'chart-head' },
     h('button', { type: 'button', class: 'chart-title', onclick: onOpen, 'aria-haspopup': 'dialog' },
       h('span', {}, text, note ? h('small', {}, note) : null),
-      h('i', { class: 'gear', 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>' })),
+      h('i', { class: 'gear', 'aria-hidden': 'true', html: GEAR })),
     onFocus ? h('button', { type: 'button', class: 'gear focus-btn', onclick: onFocus, 'aria-label': `${text} full screen`,
       html: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>' }) : null);
 }
 
+export const GEAR = '<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>';
+
 // Bottom sheet of chart settings. fields() lists the rows and is called again after every
-// change, so options can depend on each other. Each change applies to the chart right away.
+// change, so options can depend on each other. Each change applies to the chart right away,
+// and a 'chartsettings' event lets a full-screen chart redraw too.
 //   {type: 'seg', label, options, value, set}  {type: 'check', label, value, set}  {type: 'action', label, run}
 export function openSettings(title, fields) {
   const body = h('div', { class: 'sheet-body' });
@@ -101,7 +104,10 @@ export function openSettings(title, fields) {
     }
     return h('button', { type: 'button', class: 'linkbtn sheet-action', onclick: () => { f.run(); draw(); } }, f.label);
   };
-  const draw = () => body.replaceChildren(...fields().filter(Boolean).map(row));
+  const draw = () => {
+    body.replaceChildren(...fields().filter(Boolean).map(row));
+    window.dispatchEvent(new Event('chartsettings'));
+  };
   const dlg = h('dialog', { class: 'sheet', 'aria-label': `${title} settings` },
     h('div', { class: 'sheet-inner' },
       h('div', { class: 'sheet-head' }, h('b', {}, title),

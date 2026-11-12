@@ -11,7 +11,7 @@ const delta = (now, before, div, after = '') => h('small', { class: now != null 
 const day = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 
 export default {
-  title: 'LDC Bids',
+  title: 'Bids',
   render(root) {
     const latest = data.getLatest();
     root.append(h('p', { class: 'sub' },

@@ -4,7 +4,7 @@
 //   muted: grey context line, left out of the legend and the values box
 //   band:  [{d, lo, hi}] shaded day range (low to high) behind the line
 //   bars:  daily OHLC bars like Barchart; points also carry o, h, l, c (v is the close)
-import { h, num } from './ui.js';
+import { h, num, GEAR } from './ui.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}, text) => {
@@ -52,6 +52,15 @@ window.addEventListener('resize', () => {
   }, 150);
 });
 
+// A tap anywhere off a chart puts its values box away.
+const tips = new Set();
+document.addEventListener('pointerdown', (e) => {
+  for (const t of tips) {
+    if (!t.plot.isConnected) tips.delete(t);
+    else if (!t.plot.contains(e.target)) t.hide();
+  }
+}, true);
+
 export function timeChart(series, opts = {}) {
   lastSize = `${window.innerWidth}x${window.innerHeight}`;
   const box = h('div', { class: 'chart-box' });
@@ -63,26 +72,41 @@ export function timeChart(series, opts = {}) {
 
 // Full-screen view of one chart. It covers the whole app, the page can't scroll behind it,
 // and it redraws to fit when the phone turns. ×, the phone's Back, or Esc closes it.
-export function focusChart(title, series, opts = {}) {
+// source() returns {title, series, opts} for the chart as it is now; settings opens its sheet,
+// and the view redraws from source() after each change.
+export function focusChart(source, settings = null) {
   lastSize = `${window.innerWidth}x${window.innerHeight}`;
   const body = h('div', { class: 'focus-body' });
+  const title = h('b');
   const close = () => history.back();
-  const sheet = h('div', { class: 'focus', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
-    h('div', { class: 'focus-head' }, h('b', {}, title),
-      h('button', { type: 'button', class: 'icon-btn focus-close', 'aria-label': 'Close full screen', onclick: close }, '×')),
+  const sheet = h('div', { class: 'focus', role: 'dialog', 'aria-modal': 'true' },
+    h('div', { class: 'focus-head' }, title,
+      h('div', { class: 'focus-tools' },
+        settings ? h('button', { type: 'button', class: 'gear', 'aria-label': 'Chart settings', onclick: settings, html: GEAR }) : null,
+        h('button', { type: 'button', class: 'icon-btn focus-close', 'aria-label': 'Close full screen', onclick: close }, '×'))),
     body);
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  // Esc in an open settings sheet only closes the sheet.
+  const onKey = (e) => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) close(); };
+  const draw = () => {
+    const src = source();
+    title.textContent = src?.title ?? '';
+    sheet.setAttribute('aria-label', src?.title ?? 'Chart');
+    return src ? drawChart(src.series, { ...src.opts, fit: () => ({ w: body.clientWidth, h: body.clientHeight }) })
+      : h('p', { class: 'small muted' }, 'Nothing to show with these settings.');
+  };
+  const redraw = () => body.replaceChildren(draw());
   // An extra history entry, so the phone's Back button closes the view instead of leaving the app.
   history.pushState({ focus: true }, '');
   window.addEventListener('popstate', () => {
     sheet.remove();
     document.documentElement.classList.remove('focused');
     window.removeEventListener('keydown', onKey);
+    window.removeEventListener('chartsettings', redraw);
   }, { once: true });
   window.addEventListener('keydown', onKey);
+  window.addEventListener('chartsettings', redraw);
   document.documentElement.classList.add('focused');
   document.body.append(sheet);
-  const draw = () => drawChart(series, { ...opts, fit: () => ({ w: body.clientWidth, h: body.clientHeight }) });
   body.append(draw());
   live.add({ box: body, draw });
 }
@@ -233,9 +257,21 @@ function drawChart(series, { digits = 2, zero = false, empty = 'Not enough histo
     const t = t0 + ((((e.clientX - r.left) / r.width) * W - L) / (W - L - R)) * (t1 - t0);
     show(dates.reduce((best, d) => (Math.abs(ms(d) - t) < Math.abs(ms(best) - t) ? d : best)));
   };
+  // Touch: drag to read values; they stay up after lifting the finger. A quick tap while they're
+  // up hides them, and so does tapping anywhere off the chart. A mouse shows them on hover.
+  let tap = null;
   svg.addEventListener('pointermove', onMove);
-  svg.addEventListener('pointerdown', onMove);
-  // A mouse leaving clears it; a finger lifting (or the page scrolling) leaves the reading up.
+  svg.addEventListener('pointerdown', (e) => {
+    tap = { x: e.clientX, y: e.clientY, t: e.timeStamp, was: !tip.hidden };
+    onMove(e);
+  });
+  svg.addEventListener('pointerup', (e) => {
+    const quick = tap && e.timeStamp - tap.t < 400 && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 10;
+    if (e.pointerType !== 'mouse' && quick && tap.was) hide();
+    tap = null;
+  });
   svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hide(); });
-  return h('div', {}, legend, h('div', { class: 'plot' }, svg, tip));
+  const plot = h('div', { class: 'plot' }, svg, tip);
+  tips.add({ plot, hide });
+  return h('div', {}, legend, plot);
 }

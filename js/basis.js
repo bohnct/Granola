@@ -9,6 +9,17 @@ import { monthPanel } from './month.js';
 
 const daysAgo = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('en-CA');
 
+// Each part of the page folds away. Coming to the tab starts them all closed; a redraw in
+// place (unit switch, fresh prices) keeps whichever are open.
+const open = new Set();
+function section(key, title, content, note = null) {
+  if (!content) return null;
+  return h('details', { class: 'section', open: open.has(key),
+    ontoggle: (e) => { if (e.target.open) open.add(key); else open.delete(key); } },
+  h('summary', {}, title, note ? h('small', {}, note) : null),
+  h('div', { class: 'section-body' }, content));
+}
+
 export default {
   title: 'Plots',
   render(root, sub, { keep = false } = {}) {
@@ -16,6 +27,8 @@ export default {
     const [comArg, label] = sub.split('/').map(decodeURIComponent);
     if (COMMODITIES.some((c) => c.key === comArg) && comArg !== prefs.get('com')) prefs.set('com', comArg);
 
+    if (!keep) open.clear();
+    if (label) open.add('month'); // opened from a tapped row on the Bids tab
     const body = h('div', {}, h('p', { class: 'small muted' }, 'Loading…'));
     const draw = async () => {
       const [hists, logs, futures] = await Promise.all([
@@ -26,9 +39,14 @@ export default {
       const byCom = Object.fromEntries(COMMODITIES.map((c, i) => [c.key, { hist: hists[i], log: logs[i] }]));
       const com = prefs.get('com');
       const month = monthPanel(com, byCom[com].hist, byCom[com].log, futures, label);
-      body.replaceChildren(...[monthsChart(com, byCom[com].hist), premium(byCom), month].filter(Boolean));
+      const monthSec = section('month', 'One delivery month', month);
+      body.replaceChildren(...[
+        section('all', 'All delivery months', monthsChart(com, byCom[com].hist)),
+        section('premium', 'Health canola premium', premium(byCom)),
+        monthSec,
+      ].filter(Boolean));
       // Opened from a tapped row: go to the month. A redraw in place (keep) stays put.
-      if (label && month && !keep) month.scrollIntoView();
+      if (label && monthSec && !keep) monthSec.scrollIntoView();
     };
     root.append(body);
     return draw();

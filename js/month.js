@@ -45,11 +45,12 @@ export function monthPanel(com, hist, changes, futures, label) {
   ]);
   const head = h('div');
   const detail = h('div');
+  const shown = new Map(); // key -> {title, series, opts} as last drawn
   const draw = () => {
     const note = [RANGES.find((r) => r.value === range())?.label, STYLES.find((s) => s.value === style()).label,
       style() === 'line' && prefs.get('band') ? 'daily low–high' : null].filter(Boolean).join(' · ');
     head.replaceChildren(chartTitle('One delivery month', settings, note));
-    detail.replaceChildren(...view(com, cur, changes, futures, settings).filter(Boolean));
+    detail.replaceChildren(...view(com, cur, changes, futures, settings, shown).filter(Boolean));
   };
   draw();
   return h('section', { id: 'month', class: 'month' },
@@ -57,7 +58,8 @@ export function monthPanel(com, hist, changes, futures, label) {
     detail);
 }
 
-function view(com, cur, changes, futures, settings) {
+function view(com, cur, changes, futures, settings, shown) {
+  shown.clear();
   const div = prefs.unitDiv(com);
   const unit = prefs.unitLabel();
   const from = rangeStart(range());
@@ -77,10 +79,10 @@ function view(com, cur, changes, futures, settings) {
     return x && x.h != null && x.l != null ? { d: r.d, lo: x.l / div, hi: x.h / div } : null;
   }).filter(Boolean) : null;
 
-  const card = chartCard(cur, settings);
+  const card = chartCard(cur, settings, shown);
   return [
     ...(style() === 'bars' ? barCards(rows, futures, div, unit, card) : [
-      card(`Cash price vs futures (${unit})`, [
+      card('price', `Cash price vs futures (${unit})`, [
         { name: 'Cash', cls: 's1', points: rows.map((r) => ({ d: r.d, v: r.price / div })), band: span(rows, 'p') },
         { name: 'Futures', cls: 's2', points: rows.map((r) => ({ d: r.d, v: r.fut / div })), band: futSpan },
       ], {
@@ -88,7 +90,7 @@ function view(com, cur, changes, futures, settings) {
         // The gap between the lines is the basis; show it with the values too.
         extra: (vals) => (vals.Cash != null && vals.Futures != null ? ['Basis', signed(vals.Cash - vals.Futures, 2)] : null),
       }),
-      card(`Basis (${unit})`,
+      card('basis', `Basis (${unit})`,
         [{ name: 'Basis', cls: 's1', step: true, points: rows.map((r) => ({ d: r.d, v: r.basis / div })), band: span(rows, 'b') }],
         { zero: true, height: 170, empty: 'The chart needs two saved days.' },
         'Basis = cash − futures. Higher (less negative) is better for the seller.')]),
@@ -97,12 +99,18 @@ function view(com, cur, changes, futures, settings) {
   ];
 }
 
+// What a full-screen chart turns into when Lines <-> Bars changes which charts exist.
+const SWAP = { price: 'cash', cash: 'price', fut: 'price' };
+
 // A chart card for this month: title (settings + full screen), chart, optional note.
 // The full-screen view names the month, since the rest of the panel isn't visible there.
-const chartCard = (cur, settings) => (title, series, opts, note = null) => h('div', { class: 'card' },
-  chartTitle(title, settings, null, () => focusChart(`${cur.label} · ${title}`, series, opts)),
-  timeChart(series, opts),
-  note ? h('p', { class: 'small muted', style: 'margin:6px 0 0' }, note) : null);
+const chartCard = (cur, settings, shown) => (key, title, series, opts, note = null) => {
+  shown.set(key, { title: `${cur.label} · ${title}`, series, opts });
+  return h('div', { class: 'card' },
+    chartTitle(title, settings, null, () => focusChart(() => shown.get(key) ?? shown.get(SWAP[key]), settings)),
+    timeChart(series, opts),
+    note ? h('p', { class: 'small muted', style: 'margin:6px 0 0' }, note) : null);
+};
 
 // Daily bars (open, high, low, close), one chart each for cash, futures and basis.
 // Futures use the exchange's own daily bars, so they include the overnight session.
@@ -113,13 +121,13 @@ function barCards(rows, futures, div, unit, card) {
     return x && x.c != null ? bar(r.d, [x.o ?? x.c, x.h ?? x.c, x.l ?? x.c, x.c]) : bar(r.d, [r.fut, r.fut, r.fut, r.fut]);
   };
   const syms = [...new Set(rows.map((r) => r.sym).filter(Boolean))];
-  const bars = (title, points, opts = {}, note = null) => card(title, [{ name: title, cls: 's1', bars: true, points }],
+  const bars = (key, title, points, opts = {}, note = null) => card(key, title, [{ name: title, cls: 's1', bars: true, points }],
     { empty: 'The chart needs two saved days.', ...opts }, note);
   const ok = (r, k) => r[k]?.every((v) => v != null);
   return [
-    bars(`Cash price (${unit})`, rows.filter((r) => ok(r, 'p')).map((r) => bar(r.d, r.p))),
-    bars(`Futures${syms.length ? ` ${syms.join(', ')}` : ''} (${unit})`, rows.filter((r) => r.fut != null).map(futBar)),
-    bars(`Basis (${unit})`, rows.filter((r) => ok(r, 'b')).map((r) => bar(r.d, r.b)), { zero: true, height: 170 },
+    bars('cash', `Cash price (${unit})`, rows.filter((r) => ok(r, 'p')).map((r) => bar(r.d, r.p))),
+    bars('fut', `Futures${syms.length ? ` ${syms.join(', ')}` : ''} (${unit})`, rows.filter((r) => r.fut != null).map(futBar)),
+    bars('basis', `Basis (${unit})`, rows.filter((r) => ok(r, 'b')).map((r) => bar(r.d, r.b)), { zero: true, height: 170 },
       'Each bar is one day: the line runs from the low to the high, the left tick is the first reading and the right tick the last. Days before Oct 29, 2026 have one reading.'),
   ];
 }
