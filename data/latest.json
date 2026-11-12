@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-12T19:15:01+00:00",
+ "updatedAt": "2026-11-12T19:30:04+00:00",
  "errors": [],
  "facilities": {
   "yorkton": {
@@ -11,9 +11,9 @@
       "start": "2026-12-01",
       "end": "2026-12-31",
       "basis": -17.0,
-      "futures": 776.6,
+      "futures": 770.4,
       "futuresSymbol": "RSF27",
-      "price": 759.6,
+      "price": 753.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -23,9 +23,9 @@
       "start": "2027-01-01",
       "end": "2027-01-31",
       "basis": -12.0,
-      "futures": 776.6,
+      "futures": 770.4,
       "futuresSymbol": "RSF27",
-      "price": 764.6,
+      "price": 758.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -35,9 +35,9 @@
       "start": "2027-02-01",
       "end": "2027-02-28",
       "basis": -17.0,
-      "futures": 786.4,
+      "futures": 781.0,
       "futuresSymbol": "RSH27",
-      "price": 769.4,
+      "price": 764.0,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -47,9 +47,9 @@
       "start": "2027-03-01",
       "end": "2027-03-31",
       "basis": -15.0,
-      "futures": 786.4,
+      "futures": 781.0,
       "futuresSymbol": "RSH27",
-      "price": 771.4,
+      "price": 766.0,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -59,9 +59,9 @@
       "start": "2027-04-01",
       "end": "2027-04-30",
       "basis": -17.0,
-      "futures": 794.1,
+      "futures": 788.5,
       "futuresSymbol": "RSK27",
-      "price": 777.1,
+      "price": 771.5,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -71,9 +71,9 @@
       "start": "2027-05-01",
       "end": "2027-05-31",
       "basis": -15.0,
-      "futures": 794.1,
+      "futures": 788.5,
       "futuresSymbol": "RSK27",
-      "price": 779.1,
+      "price": 773.5,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -83,9 +83,9 @@
       "start": "2027-06-01",
       "end": "2027-06-30",
       "basis": -17.0,
-      "futures": 796.6,
+      "futures": 790.4,
       "futuresSymbol": "RSN27",
-      "price": 779.6,
+      "price": 773.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -95,9 +95,9 @@
       "start": "2027-07-01",
       "end": "2027-07-31",
       "basis": -15.0,
-      "futures": 796.6,
+      "futures": 790.4,
       "futuresSymbol": "RSN27",
-      "price": 781.6,
+      "price": 775.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -107,9 +107,9 @@
       "start": "2027-09-01",
       "end": "2027-09-30",
       "basis": -20.0,
-      "futures": 769.0,
+      "futures": 764.9,
       "futuresSymbol": "RSX27",
-      "price": 749.0,
+      "price": 744.9,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -119,9 +119,9 @@
       "start": "2027-10-01",
       "end": "2027-10-31",
       "basis": -20.0,
-      "futures": 769.0,
+      "futures": 764.9,
       "futuresSymbol": "RSX27",
-      "price": 749.0,
+      "price": 744.9,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -133,9 +133,9 @@
       "start": "2026-11-01",
       "end": "2026-11-30",
       "basis": 43.0,
-      "futures": 770.0,
+      "futures": 759.9,
       "futuresSymbol": "RSX26",
-      "price": 813.0,
+      "price": 802.9,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -145,9 +145,9 @@
       "start": "2027-01-01",
       "end": "2027-01-31",
       "basis": 58.0,
-      "futures": 776.6,
+      "futures": 770.4,
       "futuresSymbol": "RSF27",
-      "price": 834.6,
+      "price": 828.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -157,9 +157,9 @@
       "start": "2027-02-01",
       "end": "2027-02-28",
       "basis": 53.0,
-      "futures": 786.4,
+      "futures": 781.0,
       "futuresSymbol": "RSH27",
-      "price": 839.4,
+      "price": 834.0,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -169,9 +169,9 @@
       "start": "2027-03-01",
       "end": "2027-03-31",
       "basis": 55.0,
-      "futures": 786.4,
+      "futures": 781.0,
       "futuresSymbol": "RSH27",
-      "price": 841.4,
+      "price": 836.0,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -181,9 +181,9 @@
       "start": "2027-04-01",
       "end": "2027-04-30",
       "basis": 53.0,
-      "futures": 794.1,
+      "futures": 788.5,
       "futuresSymbol": "RSK27",
-      "price": 847.1,
+      "price": 841.5,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -193,9 +193,9 @@
       "start": "2027-05-01",
       "end": "2027-05-31",
       "basis": 55.0,
-      "futures": 794.1,
+      "futures": 788.5,
       "futuresSymbol": "RSK27",
-      "price": 849.1,
+      "price": 843.5,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -205,9 +205,9 @@
       "start": "2027-06-01",
       "end": "2027-06-30",
       "basis": 53.0,
-      "futures": 796.6,
+      "futures": 790.4,
       "futuresSymbol": "RSN27",
-      "price": 849.6,
+      "price": 843.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -217,9 +217,9 @@
       "start": "2027-07-01",
       "end": "2027-07-31",
       "basis": 55.0,
-      "futures": 796.6,
+      "futures": 790.4,
       "futuresSymbol": "RSN27",
-      "price": 851.6,
+      "price": 845.4,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -229,9 +229,9 @@
       "start": "2027-09-01",
       "end": "2027-09-30",
       "basis": 63.0,
-      "futures": 769.0,
+      "futures": 764.9,
       "futuresSymbol": "RSX27",
-      "price": 832.0,
+      "price": 827.9,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -241,9 +241,9 @@
       "start": "2027-10-01",
       "end": "2027-10-31",
       "basis": 63.0,
-      "futures": 769.0,
+      "futures": 764.9,
       "futuresSymbol": "RSX27",
-      "price": 832.0,
+      "price": 827.9,
       "unit": "MT",
       "currency": "CAD",
       "buPerUnit": 44.092
@@ -260,7 +260,7 @@
       "low": 769.9,
       "last": 770.0,
       "change": 10.1,
-      "time": "2026-11-12T13:04:42.533+00:00"
+      "time": "2026-11-12T13:20:00.055+00:00"
      },
      {
       "month": "Jan 27",
@@ -268,9 +268,9 @@
       "open": 783.4,
       "high": 784.4,
       "low": 774.4,
-      "last": 776.8,
-      "change": 6.4,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "last": 777.2,
+      "change": 6.8,
+      "time": "2026-11-12T13:20:00.059+00:00"
      },
      {
       "month": "Mar 27",
@@ -278,9 +278,9 @@
       "open": 784.5,
       "high": 793.4,
       "low": 784.5,
-      "last": 786.5,
-      "change": 5.5,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "last": 787.0,
+      "change": 6.0,
+      "time": "2026-11-12T13:20:00.06+00:00"
      },
      {
       "month": "May 27",
@@ -288,9 +288,9 @@
       "open": 790.0,
       "high": 800.5,
       "low": 790.0,
-      "last": 794.1,
-      "change": 5.6,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "last": 794.7,
+      "change": 6.2,
+      "time": "2026-11-12T13:20:00.059+00:00"
      },
      {
       "month": "Jul 27",
@@ -298,9 +298,9 @@
       "open": 799.1,
       "high": 802.6,
       "low": 794.1,
-      "last": 796.6,
-      "change": 6.2,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "last": 796.7,
+      "change": 6.3,
+      "time": "2026-11-12T13:20:00.06+00:00"
      },
      {
       "month": "Nov 27",
@@ -308,9 +308,9 @@
       "open": 767.9,
       "high": 772.5,
       "low": 764.9,
-      "last": 769.0,
-      "change": 4.1,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "last": 768.8,
+      "change": 3.9,
+      "time": "2026-11-12T13:20:00.059+00:00"
      },
      {
       "month": "Jan 28",
@@ -320,7 +320,7 @@
       "low": 778.8,
       "last": 778.8,
       "change": 6.1,
-      "time": "2026-11-12T13:04:42.75+00:00"
+      "time": "2026-11-12T13:19:23.746+00:00"
      },
      {
       "month": "Mar 28",
@@ -330,7 +330,7 @@
       "low": 779.9,
       "last": 779.9,
       "change": 4.8,
-      "time": "2026-11-12T13:04:42.744+00:00"
+      "time": "2026-11-12T13:19:23.746+00:00"
      },
      {
       "month": "May 28",
@@ -340,7 +340,7 @@
       "low": 779.4,
       "last": 779.4,
       "change": 2.5,
-      "time": "2026-11-12T13:04:42.744+00:00"
+      "time": "2026-11-12T13:19:23.746+00:00"
      }
     ]
    }
