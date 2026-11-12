@@ -30,6 +30,7 @@ async function render(keep = false) {
   const tab = TABS[name];
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === name));
   document.getElementById('debug-btn').classList.toggle('on', name === 'debug');
+  if (name !== 'debug') lastTab = location.hash || '#bids';
   document.title = `${tab.title} · LDC Bids`;
   if (current !== name) window.scrollTo(0, 0);
   current = name;
@@ -37,6 +38,7 @@ async function render(keep = false) {
   // Hold the page's height while the tab reloads its data, so the scroll position survives.
   if (keep) view.style.minHeight = `${view.offsetHeight}px`;
   view.replaceChildren();
+  document.documentElement.classList.remove('fit');
   const done = tab.render(view, sub, { keep });
   drawTopbar(); // after render: a #basis/<crop>/<month> link may have switched the crop
   if (keep) {
@@ -44,6 +46,24 @@ async function render(keep = false) {
     view.style.minHeight = '';
     window.scrollTo(0, y);
   }
+  await done;
+  fit();
+}
+
+// The Bids tab doesn't scroll (or bounce) when everything fits above the tab bar.
+function fit() {
+  const tabbar = document.querySelector('.tabbar').getBoundingClientRect().top;
+  const fits = current === 'bids' && view.getBoundingClientRect().bottom <= tabbar + 1;
+  document.documentElement.classList.toggle('fit', fits);
+  if (fits) window.scrollTo(0, 0);
+}
+window.addEventListener('resize', () => { document.documentElement.classList.remove('fit'); requestAnimationFrame(fit); });
+
+// The debug icon opens the debug page; tapping it again goes back to the tab you were on.
+let lastTab = '#bids';
+function toggleDebug(e) {
+  e.preventDefault();
+  location.hash = current === 'debug' ? lastTab : '#debug';
 }
 
 function updateBanner() {
@@ -52,6 +72,7 @@ function updateBanner() {
     : data.isStale() ? `LDC prices last changed ${timeAgo(latest.updatedAt)}.` : '';
   banner.hidden = !msg;
   banner.textContent = msg;
+  fit(); // the banner can push the Bids table past the tab bar
 }
 
 async function refresh() {
@@ -103,6 +124,7 @@ function start() {
   refreshBtn.addEventListener('click', refresh);
   document.getElementById('theme-btn').addEventListener('click', cycleTheme);
   unitBtn.addEventListener('click', toggleUnit);
+  document.getElementById('debug-btn').addEventListener('click', toggleDebug);
   // Refresh when the app comes back to the foreground.
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 

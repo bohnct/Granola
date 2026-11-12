@@ -71,6 +71,8 @@
 }
 
 * { box-sizing: border-box; }
+/* No double-tap zoom anywhere (charts and the full-screen view set stricter rules). */
+* { touch-action: manipulation; }
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
@@ -386,13 +388,19 @@ html.focused, html.focused body { overflow: hidden; }
 .debug-h { font-size: 18px; margin: 14px 0 0; }
 .kv { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
 .kv b { text-align: right; }
-.debug-day { border-top: 1px solid var(--line); }
-.debug-day summary { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
-.debug-day summary::-webkit-details-marker { display: none; }
-.debug-day summary b::before { content: '▸'; display: inline-block; width: 14px; color: var(--brand); transition: transform .15s; }
-.debug-day[open] summary b::before { transform: rotate(90deg); }
-.debug-body { padding: 0 14px 12px; }
-.debug-body p { margin: 4px 0; }
+.debug-year, .debug-month, .debug-day { border-top: 1px solid var(--line); }
+:is(.debug-year, .debug-month, .debug-day) > summary { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+:is(.debug-year, .debug-month, .debug-day) > summary::-webkit-details-marker { display: none; }
+:is(.debug-year, .debug-month, .debug-day) > summary b::before { content: '▸'; display: inline-block; width: 14px; color: var(--brand); transition: transform .15s; }
+:is(.debug-year, .debug-month, .debug-day)[open] > summary b::before { transform: rotate(90deg); }
+.debug-year > summary { font-size: 17px; }
+.debug-month > summary { padding-left: 24px; background: var(--surface-2); }
+.debug-day > summary { padding-left: 34px; }
+.debug-day b { font-weight: 600; }
+:is(.debug-year, .debug-month, .debug-day) > summary b { flex: none; white-space: nowrap; }
+:is(.debug-year, .debug-month, .debug-day) > summary span { text-align: right; }
+.debug-day-body { padding: 0 14px 12px 48px; }
+.debug-day-body p { margin: 4px 0; }
 .debug-sub { margin-top: 10px !important; }
 .debug-times { display: flex; flex-wrap: wrap; gap: 4px; }
 .debug-times .run { font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--muted); }
@@ -409,3 +417,6 @@ html.focused, html.focused body { overflow: hidden; }
 .section > summary small { margin-left: auto; font-weight: 600; color: var(--muted); font-size: 12px; }
 .section[open] > summary small { display: none; }
 .section > .section-body > :first-child { margin-top: 8px; }
+
+/* Bids tab: when the table fits above the tab bar, the page doesn't scroll or bounce (app.js sets .fit). */
+html.fit, html.fit body { overflow: hidden; overscroll-behavior: none; }

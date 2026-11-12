@@ -1,5 +1,5 @@
-// Basis tab: every delivery month's basis charted together, the health-canola premium over
-// regular canola, and one month in detail.
+// Plots tab: one month in detail, every delivery month's basis charted together, and the
+// health-canola premium over regular canola.
 import * as data from './data.js';
 import * as prefs from './prefs.js';
 import { COMMODITIES } from './config.js';
@@ -41,9 +41,9 @@ export default {
       const month = monthPanel(com, byCom[com].hist, byCom[com].log, futures, label);
       const monthSec = section('month', 'One delivery month', month);
       body.replaceChildren(...[
+        monthSec,
         section('all', 'All delivery months', monthsChart(com, byCom[com].hist)),
         section('premium', 'Health canola premium', premium(byCom)),
-        monthSec,
       ].filter(Boolean));
       // Opened from a tapped row: go to the month. A redraw in place (keep) stays put.
       if (label && monthSec && !keep) monthSec.scrollIntoView();

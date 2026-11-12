@@ -1,6 +1,6 @@
 // Service worker: app files cache-first (offline), price data network-first.
 // Bump VERSION whenever app files change so phones pick up the new version.
-const VERSION = 'basis-v15';
+const VERSION = 'basis-v17';
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = 'data';
 const APP_FILES = [
