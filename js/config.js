@@ -12,3 +12,7 @@ export const COMMODITIES = [
 export const BU_PER_MT = 44.092; // canola bushels per tonne; LDC sends the same factor with each bid
 
 export const commodity = (key) => COMMODITIES.find((c) => c.key === key) ?? COMMODITIES[0];
+
+// GitHub repo the app and its data live in; the debug page reads its Action run history.
+export const GITHUB_REPO = 'bohnct/Granola';
+export const FETCH_WORKFLOW = 'fetch-ldc.yml';

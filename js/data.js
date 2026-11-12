@@ -1,5 +1,5 @@
 // Loads price data written by the GitHub Action (scripts/fetch_ldc.py).
-import { FACILITY, BU_PER_MT } from './config.js';
+import { FACILITY, BU_PER_MT, GITHUB_REPO, FETCH_WORKFLOW } from './config.js';
 
 let latest = null;
 const fileCache = new Map();
@@ -57,6 +57,23 @@ export const futuresHistory = async () => (await file(`${FACILITY.key}-futures`)
 // Always fetched fresh: quiet runs add to it without changing latest.json.
 export const fetchLog = () => fetch(`data/fetchlog.json?t=${Date.now()}`, { cache: 'no-store' })
   .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
+// The fetch Action's runs from GitHub's public API, newest first: [{start, end, result, event}].
+// Up to 300 runs; null when GitHub can't be reached (offline, or its hourly limit of 60 calls).
+export async function actionRuns() {
+  const runs = [];
+  try {
+    for (let page = 1; page <= 3; page++) {
+      const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${FETCH_WORKFLOW}/runs?per_page=100&page=${page}`);
+      if (!r.ok) return runs.length ? runs : null;
+      const { workflow_runs: list = [] } = await r.json();
+      runs.push(...list.map((x) => ({ start: x.run_started_at ?? x.created_at, end: x.updated_at,
+        result: x.status === 'completed' ? x.conclusion : x.status, event: x.event })));
+      if (list.length < 100) break;
+    }
+  } catch { return runs.length ? runs : null; }
+  return runs;
+}
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
