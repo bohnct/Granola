@@ -14,7 +14,7 @@ Output:
       row = {"d", "sym", "f", "b": [o,h,l,c], "p": [o,h,l,c]}  one per day: futures at the last
       reading, and the day's open/high/low/close of the basis and the cash price
   data/history/<fac>-futures.json        {contract: [{d,o,h,l,c}, ...]}  exchange daily OHLC
-  data/fetchlog.json                     {"YYYY-MM-DD": [{"t": "HH:MM", "s": "new"|"same"|"error", "e"?}]}
+  data/fetchlog.json                     {"YYYY-MM-DD": [{"t": "HH:MM", "s": "new"|"same"|"night"|"error", "e"?}]}
       one entry per fetch run (Saskatchewan time), for the app's debug page
 """
 from __future__ import annotations
@@ -52,6 +52,10 @@ FETCHLOG_KEEP_DAYS = 60
 WINDOW = ((6, 30), (15, 30))
 LOOP_EVERY = 15 * 60
 LOOP_MAX = 5 * 3600 + 45 * 60
+# Canola's night session opens at 19:00 Central and counts toward the NEXT trading day. From this
+# Saskatchewan hour (19:00 Central in summer) prices still go to latest.json for the Bids tab, but
+# they don't touch the daily history, so they can't overwrite the day's close.
+NIGHT_FROM = 18
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -275,8 +279,40 @@ def update_history(fac_key: str, snap: dict) -> list[str]:
     return changed
 
 
+def apply_repairs() -> list[str]:
+    """Apply each scripts/repair_*.json once: corrected daily rows {"id", "bids": {crop: {label: {day: fields}}},
+    "futures": {contract: {day: fields}}}. Finished ids are kept in data/repairs-done.json."""
+    done_path = DATA / "repairs-done.json"
+    done = read_json(done_path, [])
+    applied = []
+    for path in sorted((ROOT / "scripts").glob("repair_*.json")):
+        repair = read_json(path, {})
+        if not repair.get("id") or repair["id"] in done:
+            continue
+        for fac in FACILITIES:
+            for com, labels in repair.get("bids", {}).items():
+                store_path = HIST / f"{fac['key']}-{com}.json"
+                store = read_json(store_path, {"bids": {}, "changes": []})
+                for label, days in labels.items():
+                    for row in store["bids"].get(label, []):
+                        row.update(days.get(row["d"], {}))
+                write_history(store_path, store)
+            fut_path = HIST / f"{fac['key']}-futures.json"
+            futures = read_json(fut_path, {})
+            for contract, days in repair.get("futures", {}).items():
+                for row in futures.get(contract, []):
+                    row.update(days.get(row["d"], {}))
+            write_history(fut_path, futures)
+        done.append(repair["id"])
+        applied.append(repair["id"])
+    if applied:
+        write_if_changed(done_path, done)
+    return applied
+
+
 def log_fetch(status: str, errors: list[str]) -> None:
-    """Record this run in data/fetchlog.json: new = prices changed, same = nothing new, error = a fetch failed."""
+    """Record this run in data/fetchlog.json: new = prices changed and saved, same = nothing new,
+    night = night-session prices (shown on the Bids tab, not saved to the day), error = a fetch failed."""
     now = datetime.now(LOCAL_TZ)
     path = DATA / "fetchlog.json"
     log = read_json(path, {})
@@ -291,6 +327,7 @@ def run_once() -> int:
     migrated = []
     for fac in FACILITIES:
         migrated += migrate(fac["key"])
+    migrated += apply_repairs()
 
     latest_path = DATA / "latest.json"
     previous = read_json(latest_path, {})
@@ -321,11 +358,12 @@ def run_once() -> int:
     wrote = write_if_changed(latest_path, latest)
 
     hist_changed = []
-    if changed_prices and not errors:
+    night = datetime.now(LOCAL_TZ).hour >= NIGHT_FROM
+    if changed_prices and not errors and not night:
         for key, snap in facilities.items():
             hist_changed += update_history(key, snap)
 
-    log_fetch("error" if errors else "new" if changed_prices else "same", errors)
+    log_fetch("error" if errors else "same" if not changed_prices else "night" if night else "new", errors)
 
     stamp = datetime.now(LOCAL_TZ).strftime("%H:%M")
     print(f"{stamp} latest.json {'updated' if wrote else 'unchanged'}; history: {', '.join(hist_changed) or 'unchanged'}"

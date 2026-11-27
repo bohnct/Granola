@@ -22,13 +22,28 @@ The top bar has the crop switch (Canola / Nexera) and a small $/MT ↔ $/bu butt
 
 LDC's site doesn't let other sites read its data, so a GitHub Action (`scripts/fetch_ldc.py --loop`) fetches it and commits it into `data/`. GitHub starts scheduled runs late or skips them when busy, so each run stays up and fetches every 15 minutes until 15:30 Saskatchewan time (handing over to the next run before GitHub's 6-hour job limit). Each run is logged in `data/fetchlog.json`, so it commits every 15 minutes during the trading day.
 
+## Reliable morning starts
+
+GitHub's own schedule fires only a few times a day, often after the market has closed, so an outside timer starts the fetch job. On [cron-job.org](https://cron-job.org) (free), create one job:
+
+- **URL:** `https://api.github.com/repos/bohnct/Granola/actions/workflows/fetch-ldc.yml/dispatches`, method **POST**
+- **Schedule:** time zone `America/Regina`, Monday to Friday, minute **35**, hours **6 to 15 and 17**
+- **Headers:** `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `Authorization: Bearer <token>`
+- **Body:** `{"ref":"main"}`
+
+The token is a GitHub fine-grained personal access token limited to this repository, with the **Actions: Read and write** permission. A trigger that arrives while a run is going waits its turn or shows as cancelled, which is harmless.
+
+## Night session
+
+Canola's night session opens in the evening and counts toward the next trading day. From 18:00 Saskatchewan time the fetcher still updates `latest.json` (the Bids tab) but leaves the daily history alone, so a day's close stays the real close. These fetches show as `night` in the fetch log. `scripts/repair_*.json` files hold one-time corrections to past days; the fetcher applies each once and records it in `data/repairs-done.json`.
+
 ## Data files (`data/`)
 
 | File | Contents |
 |---|---|
 | `latest.json` | Newest snapshot: canola and Nexera bids, canola futures. |
 | `history/yorkton-<crop>.json` | `{"bids": {delivery: [row, ...]}, "changes": [{t, label, from, to, fut}, ...]}`. One row per day per delivery month: `{d, sym, f, b: [open, high, low, close], p: [open, high, low, close]}`, i.e. the futures contract and price at the last reading, and the day's range of basis (`b`) and cash price (`p`). `changes` logs every basis move with the time it was seen. |
-| `fetchlog.json` | `{"YYYY-MM-DD": [{t: "HH:MM", s: "new"/"same"/"error", e?}]}`: every fetch run in Saskatchewan time (last 60 days), for the Debug page. |
+| `fetchlog.json` | `{"YYYY-MM-DD": [{t: "HH:MM", s: "new"/"same"/"night"/"error", e?}]}`: every fetch run in Saskatchewan time (last 60 days), for the Debug page. |
 | `history/yorkton-futures.json` | `{contract: [{d, o, h, l, c}]}`: the exchange's daily bars for canola futures (both crops price off these). |
 
 Days before Oct 29, 2026 had one reading, so their open, high, low and close are the same. Older copies of the app wrote `cashbids-*`, `basischanges-*` and `futures-*` files; the fetcher converts them into the files above on its first run and deletes them, keeping every day.

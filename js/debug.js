@@ -15,7 +15,7 @@ const skTime = (iso) => sk(iso, { hour: '2-digit', minute: '2-digit', hour12: fa
 const dayName = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
 // Not failures: a trigger that waited while a run was looping gets cancelled or skipped.
 const FINE = ['success', 'in_progress', 'queued', 'waiting', 'pending', 'cancelled', 'skipped'];
-const STATUS = { new: 'new prices', same: 'no change', error: 'error' };
+const STATUS = { new: 'new prices', same: 'no change', night: 'night session, not saved to this day', error: 'error' };
 const plural = (n, word, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
 const length = (a, b) => {
   const mins = Math.round((new Date(b) - new Date(a)) / 60000);
@@ -67,7 +67,7 @@ export default {
       latest?.errors?.length ? kv('Errors in latest.json', latest.errors.join('; ')) : null,
       h('p', { class: 'small muted', style: 'margin:8px 0 0' },
         'A trading day should show about 36 fetches (every 15 min, 6:30–15:30 SK) plus an evening one. ',
-        'Bold times brought new prices, red ones failed, grey ones found no change. ',
+        'Bold times brought new prices, red ones failed, grey ones found no change, faded ones were night-session prices (they count toward the next day). ',
         log ? `The fetch log starts ${dayName(logDays[0])}; earlier days only have GitHub's Action runs. ` : 'No fetch log yet: it starts with the first run of the updated fetcher. ',
         h('a', { href: runsUrl, target: '_blank', rel: 'noopener' }, 'Runs on GitHub')));
 
