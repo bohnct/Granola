@@ -53,7 +53,7 @@ Days before Oct 29, 2026 had one reading, so their open, high, low and close are
 The history only exists in the GitHub repo's `data/` folder. LDC doesn't publish past prices, so it can't be fetched again.
 
 1. In the existing repo, **delete the old app files**: `js/` (all of it, including `js/calc/`), `css/`, `google-apps-script/`, `index.html`, `sw.js`, `manifest.webmanifest`, `scripts/make_icons.ps1`. **Do not touch `data/`.**
-2. Upload everything from this folder **except `data/`**: `index.html`, `sw.js`, `manifest.webmanifest`, `README.md`, `css/`, `js/`, `icons/`, `scripts/fetch_ldc.py`, `scripts/make_icons.ps1`, `.github/workflows/fetch-ldc.yml`.
+2. Upload everything from this folder **except `data/`**: `index.html`, `sw.js`, `manifest.webmanifest`, `README.md`, `css/`, `js/`, `icons/`, `scripts/fetch_ldc.py`, `.github/workflows/fetch-ldc.yml`.
 3. Go to **Actions → Fetch LDC prices → Run workflow** once, so the data is converted right away.
 4. Open the app on the phone. The new `sw.js` replaces the old cached app automatically. If the old screens still show, close and reopen it.
 
@@ -69,7 +69,7 @@ Then open http://localhost:8766. The local `data/` folder is only a snapshot. Th
 ## Notes
 - LDC prices are public web data delayed at least 10 minutes. Confirm with LDC before contracting.
 - After changing app files, bump `VERSION` in `sw.js` so phones load the new version.
-- App icons: `powershell -ExecutionPolicy Bypass -File scripts\make_icons.ps1` redraws `icons/` ("LDC" white over "Bids" orange on black).
+- App icons: `icons/icon.svg` is the source (Hugeicons MarketAnalysis, white on black). The PNGs are rendered from it.
 - New chart options go in the chart's `openSettings(...)` list (`js/monthschart.js`, `js/month.js`); the sheet itself is in `js/ui.js`.
 - Add another LDC elevator: add it to `FACILITIES` in `scripts/fetch_ldc.py` (its id comes from `https://www.myldc.com/api/general/facility/public?shortcut=<name>`) and set `FACILITY` in `js/config.js`.
 - The previous apps (Flask futures monitor, Grain Desk with calculators/inventory/sales) are kept in `../OLD/`.
